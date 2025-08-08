@@ -27,6 +27,7 @@ class MinecraftServerManager(Gtk.Window):
         self.selected_server = None
         
         # Configurar interfaz
+        self._setup_css()
         self._setup_ui()
         self._setup_console()
         
@@ -48,18 +49,56 @@ class MinecraftServerManager(Gtk.Window):
         self.plugin_controller.set_search_callback(self._log_to_console)
         self.plugin_controller.set_plugins_updated_callback(self._on_plugins_updated)
 
+    def _setup_css(self):
+        """Configura estilos CSS personalizados"""
+        css_provider = Gtk.CssProvider()
+        css = """
+        .sidebar {
+            background-color: #f5f5f5;
+            border-right: 1px solid #d4d4d4;
+        }
+        
+        .sidebar listbox row {
+            padding: 0;
+            border: none;
+            background: transparent;
+        }
+        
+        .sidebar listbox row:selected {
+            background-color: #4a90d9;
+            color: white;
+        }
+        
+        .sidebar listbox row:hover {
+            background-color: #e8e8e8;
+        }
+        
+        .sidebar listbox row:selected:hover {
+            background-color: #4a90d9;
+        }
+        """
+        
+        css_provider.load_from_data(css.encode())
+        screen = self.get_screen()
+        style_context = Gtk.StyleContext()
+        style_context.add_provider_for_screen(
+            screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+
     def _setup_ui(self):
         """Configura la interfaz de usuario principal"""
         # HeaderBar
         self._setup_header_bar()
         
-        # Notebook principal
-        self.notebook = Gtk.Notebook()
-        self.add(self.notebook)
+        # Layout principal con barra lateral
+        main_paned = Gtk.Paned(orientation=Gtk.Orientation.HORIZONTAL)
+        self.add(main_paned)
         
-        # Tabs
-        self._setup_server_management_tab()
-        self._setup_plugin_manager_tab()
+        # Barra lateral izquierda
+        self._setup_sidebar(main_paned)
+        
+        # Área de contenido principal
+        self._setup_content_area(main_paned)
 
     def _setup_header_bar(self):
         """Configura la barra de encabezado"""
@@ -90,55 +129,159 @@ class MinecraftServerManager(Gtk.Window):
         # Estado inicial de botones
         self._update_header_buttons()
 
-    def _setup_server_management_tab(self):
-        """Configura la pestaña de gestión de servidores"""
-        server_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.notebook.append_page(server_page, Gtk.Label(label="Server Management"))
-
-        # Sección superior: Lista de servidores y botones
-        hbox_top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        server_page.pack_start(hbox_top, True, True, 0)
-
-        # Lista de servidores
-        self._setup_server_list(hbox_top)
+    def _setup_sidebar(self, main_paned):
+        """Configura la barra lateral izquierda"""
+        # Contenedor de la barra lateral
+        sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        sidebar_box.set_size_request(200, -1)  # Ancho fijo de 200px
         
-        # Botones de acción
+        # Estilo para la barra lateral
+        sidebar_box.get_style_context().add_class("sidebar")
+        
+        # Lista de elementos de navegación
+        self.sidebar_list = Gtk.ListBox()
+        self.sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
+        # No conectar la señal aquí todavía
+        
+        # Elementos de la barra lateral
+        self.server_row = self._create_sidebar_row("Server Management", "applications-system")
+        self.plugin_row = self._create_sidebar_row("Plugin Manager", "application-x-addon")
+        
+        self.sidebar_list.add(self.server_row)
+        self.sidebar_list.add(self.plugin_row)
+        
+        sidebar_box.pack_start(self.sidebar_list, False, False, 0)
+        
+        # Separador
+        separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        
+        main_paned.pack1(sidebar_box, False, False)
+        
+    def _create_sidebar_row(self, label_text, icon_name):
+        """Crea una fila para la barra lateral"""
+        row = Gtk.ListBoxRow()
+        row.page_name = label_text  # Usar atributo Python normal
+        
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        hbox.set_margin_left(12)
+        hbox.set_margin_right(12)
+        hbox.set_margin_top(8)
+        hbox.set_margin_bottom(8)
+        
+        # Icono
+        try:
+            icon = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.BUTTON)
+        except:
+            # Fallback si no existe el icono
+            icon = Gtk.Label(label="•")
+        
+        hbox.pack_start(icon, False, False, 0)
+        
+        # Label
+        label = Gtk.Label(label=label_text)
+        label.set_halign(Gtk.Align.START)
+        hbox.pack_start(label, True, True, 0)
+        
+        row.add(hbox)
+        return row
+
+    def _setup_content_area(self, main_paned):
+        """Configura el área de contenido principal"""
+        # Stack para cambiar entre páginas
+        self.content_stack = Gtk.Stack()
+        self.content_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
+        self.content_stack.set_transition_duration(200)
+        
+        # Crear las páginas
+        self._create_server_management_page()
+        self._create_plugin_manager_page()
+        
+        main_paned.pack2(self.content_stack, True, False)
+        
+        # Ahora que todo está configurado, conectar la señal y hacer selección inicial
+        self.sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
+        self.sidebar_list.select_row(self.server_row)
+        self.content_stack.set_visible_child_name("server_management")
+
+    def _on_sidebar_selection_changed(self, listbox, row):
+        """Maneja cambios en la selección de la barra lateral"""
+        if row is None or not hasattr(self, 'content_stack'):
+            return
+            
+        page_name = row.page_name  # Usar atributo Python normal
+        if page_name == "Server Management":
+            self.content_stack.set_visible_child_name("server_management")
+        elif page_name == "Plugin Manager":
+            self.content_stack.set_visible_child_name("plugin_manager")
+
+    def _create_server_management_page(self):
+        """Crea la página de gestión de servidores"""
+        server_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        server_page.set_margin_left(12)
+        server_page.set_margin_right(12)
+        server_page.set_margin_top(12)
+        server_page.set_margin_bottom(12)
+
+        # Título de la página
+        title_label = Gtk.Label()
+        title_label.set_markup("<b>Server Management</b>")
+        title_label.set_halign(Gtk.Align.START)
+        title_label.set_margin_bottom(12)
+        server_page.pack_start(title_label, False, False, 0)
+
+        # Sección superior: Solo botones de acción
+        hbox_top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        server_page.pack_start(hbox_top, False, False, 0)
+
+        # Botones de acción (centrados)
         self._setup_server_buttons(hbox_top)
 
-        # Consola (sección inferior)
+        # Consola (sección principal)
         self._setup_console_view(server_page)
-
-    def _setup_server_list(self, container):
-        """Configura la lista de servidores"""
-        self.server_list_store = Gtk.ListStore(str, str, str)  # name, path, jar
-        self.server_list_view = Gtk.TreeView(model=self.server_list_store)
         
-        renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Server Name", renderer, text=0)
-        self.server_list_view.append_column(column)
+        self.content_stack.add_named(server_page, "server_management")
 
-        scrolled_window = Gtk.ScrolledWindow()
-        scrolled_window.set_hexpand(True)
-        scrolled_window.set_vexpand(True)
-        scrolled_window.add(self.server_list_view)
-        container.pack_start(scrolled_window, True, True, 0)
+    def _create_plugin_manager_page(self):
+        """Crea la página del gestor de plugins"""
+        plugin_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        plugin_page.set_margin_left(12)
+        plugin_page.set_margin_right(12)
+        plugin_page.set_margin_top(12)
+        plugin_page.set_margin_bottom(12)
 
-        # Conectar señal de selección
-        selection = self.server_list_view.get_selection()
-        selection.connect("changed", self._on_server_selection_changed)
+        # Título de la página
+        title_label = Gtk.Label()
+        title_label.set_markup("<b>Plugin Manager</b>")
+        title_label.set_halign(Gtk.Align.START)
+        title_label.set_margin_bottom(12)
+        plugin_page.pack_start(title_label, False, False, 0)
+
+        # Etiqueta de información del servidor
+        self.plugin_server_label = Gtk.Label(label="Select a server to manage plugins.")
+        plugin_page.pack_start(self.plugin_server_label, False, False, 0)
+
+        # Sección de plugins locales
+        self._setup_local_plugins_section(plugin_page)
+        
+        # Sección de búsqueda online
+        self._setup_online_search_section(plugin_page)
+        
+        self.content_stack.add_named(plugin_page, "plugin_manager")
 
     def _setup_server_buttons(self, container):
         """Configura los botones de acción de servidor"""
-        button_vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        container.pack_start(button_vbox, False, False, 0)
+        # Centrar los botones horizontalmente
+        button_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        button_hbox.set_halign(Gtk.Align.CENTER)
+        container.pack_start(button_hbox, True, False, 0)
 
         self.add_server_button = Gtk.Button(label="Add Server")
         self.add_server_button.connect("clicked", self._on_add_server_clicked)
-        button_vbox.pack_start(self.add_server_button, False, False, 0)
+        button_hbox.pack_start(self.add_server_button, False, False, 0)
 
         self.download_server_button = Gtk.Button(label="Download Server Type")
         self.download_server_button.connect("clicked", self._on_download_server_clicked)
-        button_vbox.pack_start(self.download_server_button, False, False, 0)
+        button_hbox.pack_start(self.download_server_button, False, False, 0)
 
     def _setup_console_view(self, container):
         """Configura la vista de consola"""
@@ -152,21 +295,6 @@ class MinecraftServerManager(Gtk.Window):
         self.console_scrolled_window.set_vexpand(True)
         self.console_scrolled_window.add(self.console_view)
         container.pack_start(self.console_scrolled_window, True, True, 0)
-
-    def _setup_plugin_manager_tab(self):
-        """Configura la pestaña del gestor de plugins"""
-        plugin_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        self.notebook.append_page(plugin_page, Gtk.Label(label="Plugin Manager"))
-
-        # Etiqueta de información del servidor
-        self.plugin_server_label = Gtk.Label(label="Select a server to manage plugins.")
-        plugin_page.pack_start(self.plugin_server_label, False, False, 0)
-
-        # Sección de plugins locales
-        self._setup_local_plugins_section(plugin_page)
-        
-        # Sección de búsqueda online
-        self._setup_online_search_section(plugin_page)
 
     def _setup_local_plugins_section(self, container):
         """Configura la sección de plugins locales"""
@@ -281,19 +409,11 @@ class MinecraftServerManager(Gtk.Window):
         if server:
             self._select_server(server)
 
-    def _on_server_selection_changed(self, selection):
-        """Maneja cambios en la selección de la lista de servidores"""
-        model, treeiter = selection.get_selected()
-        if treeiter:
-            server_name = model[treeiter][0]
-            server = self.server_controller.find_server_by_name(server_name)
-            if server:
-                self._select_server(server)
-                self._update_header_selector(server.name)
-        else:
-            self.selected_server = None
-            self._update_header_buttons()
-            self._update_plugin_info(None)
+    def _on_server_selection_changed(self, selection=None):
+        """Maneja cambios en la selección de servidores - ahora solo desde header"""
+        # Esta función ya no se usa para TreeView, solo mantenemos compatibilidad
+        # La selección ahora se maneja completamente a través del header selector
+        pass
 
     def _on_add_server_clicked(self, widget):
         """Maneja el clic en añadir servidor"""
@@ -425,11 +545,13 @@ class MinecraftServerManager(Gtk.Window):
         self.plugin_controller.refresh_local_plugins(server.path)
 
     def _select_server_by_name(self, name: str):
-        """Selecciona un servidor por nombre en la lista"""
-        for i, row in enumerate(self.server_list_store):
-            if row[0] == name:
-                selection = self.server_list_view.get_selection()
-                selection.select_path(Gtk.TreePath(i))
+        """Selecciona un servidor por nombre en el header selector"""
+        # Buscar y seleccionar en el header selector
+        for i in range(self.header_server_selector.get_model().iter_n_children(None)):
+            if self.header_server_selector.get_model().get_value(
+                self.header_server_selector.get_model().get_iter_from_string(str(i)), 0
+            ) == name:
+                self.header_server_selector.set_active(i)
                 break
 
     def _update_header_selector(self, server_name: str):
@@ -464,14 +586,12 @@ class MinecraftServerManager(Gtk.Window):
             self.plugin_server_label.set_text("Select a server to manage plugins.")
 
     def _refresh_server_list(self):
-        """Refresca la lista de servidores"""
-        self.server_list_store.clear()
+        """Refresca el selector de servidores del header"""
         self.header_server_selector.remove_all()
         self.header_server_selector.append_text("-- Add New Server --")
 
         servers = self.server_controller.get_servers()
         for server in servers:
-            self.server_list_store.append([server.name, server.path, server.jar])
             self.header_server_selector.append_text(server.name)
 
         if servers:
