@@ -14,15 +14,23 @@ from controllers.download_controller import DownloadController
 class DownloadServerDialog(Gtk.Dialog):
     def __init__(self, parent):
         super().__init__(title=_("Download Minecraft Server JAR"), parent=parent, flags=0)
-        self.add_buttons(
-            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, 
-            _("_Download"), Gtk.ResponseType.OK
-        )
+
+        cancel_button = Gtk.Button(label=_("Cancel"))
+        cancel_button.set_image(Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON))
+        cancel_button.set_always_show_image(True)
+        cancel_button.connect("clicked", lambda btn: self.response(Gtk.ResponseType.CANCEL))
+        self.add_action_widget(cancel_button, Gtk.ResponseType.CANCEL)
+
+        download_button = Gtk.Button(label=_("Download"))
+        download_button.set_image(Gtk.Image.new_from_icon_name("go-down", Gtk.IconSize.BUTTON))
+        download_button.set_always_show_image(True)
+        download_button.connect("clicked", lambda btn: self.response(Gtk.ResponseType.OK))
+        self.add_action_widget(download_button, Gtk.ResponseType.OK)
 
         self.set_default_size(400, 200)
         self.download_controller = DownloadController()
         self.download_controller.set_download_callback(self._on_status_update)
-        
+
         self._setup_ui()
         self._load_initial_data()
 

@@ -303,11 +303,19 @@ class PluginManagementPage:
             title=_("Select Plugin JAR File"),
             parent=self.parent_window,
             action=Gtk.FileChooserAction.OPEN,
-            buttons=(
-                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
-            )
         )
+
+        cancel_button = Gtk.Button(label=_("Cancel"))
+        cancel_button.set_image(Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON))
+        cancel_button.set_always_show_image(True)
+        cancel_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.CANCEL))
+        dialog.add_action_widget(cancel_button, Gtk.ResponseType.CANCEL)
+
+        open_button = Gtk.Button(label=_("Open"))
+        open_button.set_image(Gtk.Image.new_from_icon_name("document-open", Gtk.IconSize.BUTTON))
+        open_button.set_always_show_image(True)
+        open_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.OK))
+        dialog.add_action_widget(open_button, Gtk.ResponseType.OK)
 
         # Filtro para archivos JAR
         filter_jar = Gtk.FileFilter()

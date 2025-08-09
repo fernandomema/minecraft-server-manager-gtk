@@ -15,10 +15,19 @@ from utils.file_utils import get_jar_files_in_directory
 class AddServerDialog(Gtk.Dialog):
     def __init__(self, parent):
         super().__init__(title=_("Add New Minecraft Server"), parent=parent, flags=0)
-        self.add_buttons(
-            Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, 
-            Gtk.STOCK_ADD, Gtk.ResponseType.OK
-        )
+
+        # Replace deprecated stock buttons with custom ones
+        cancel_button = Gtk.Button(label=_("Cancel"))
+        cancel_button.set_image(Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON))
+        cancel_button.set_always_show_image(True)
+        cancel_button.connect("clicked", lambda btn: self.response(Gtk.ResponseType.CANCEL))
+        self.add_action_widget(cancel_button, Gtk.ResponseType.CANCEL)
+
+        add_button = Gtk.Button(label=_("Add"))
+        add_button.set_image(Gtk.Image.new_from_icon_name("list-add", Gtk.IconSize.BUTTON))
+        add_button.set_always_show_image(True)
+        add_button.connect("clicked", lambda btn: self.response(Gtk.ResponseType.OK))
+        self.add_action_widget(add_button, Gtk.ResponseType.OK)
 
         self.set_default_size(400, 250)
         self._setup_ui()
@@ -66,11 +75,19 @@ class AddServerDialog(Gtk.Dialog):
             title=_("Select Server Directory"),
             parent=self,
             action=Gtk.FileChooserAction.SELECT_FOLDER,
-            buttons=(
-                Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL,
-                Gtk.STOCK_OPEN, Gtk.ResponseType.OK
-            )
         )
+
+        cancel_button = Gtk.Button(label=_("Cancel"))
+        cancel_button.set_image(Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON))
+        cancel_button.set_always_show_image(True)
+        cancel_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.CANCEL))
+        dialog.add_action_widget(cancel_button, Gtk.ResponseType.CANCEL)
+
+        open_button = Gtk.Button(label=_("Open"))
+        open_button.set_image(Gtk.Image.new_from_icon_name("document-open", Gtk.IconSize.BUTTON))
+        open_button.set_always_show_image(True)
+        open_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.OK))
+        dialog.add_action_widget(open_button, Gtk.ResponseType.OK)
         
         response = dialog.run()
         if response == Gtk.ResponseType.OK:

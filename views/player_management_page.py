@@ -149,8 +149,18 @@ class PlayerManagementPage:
 
     def _show_add_dialog(self, title: str) -> Optional[str]:
         dialog = Gtk.Dialog(title=title, parent=self.parent_window, flags=0)
-        dialog.add_button(Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL)
-        dialog.add_button(Gtk.STOCK_OK, Gtk.ResponseType.OK)
+
+        cancel_button = Gtk.Button(label=_("Cancel"))
+        cancel_button.set_image(Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON))
+        cancel_button.set_always_show_image(True)
+        cancel_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.CANCEL))
+        dialog.add_action_widget(cancel_button, Gtk.ResponseType.CANCEL)
+
+        ok_button = Gtk.Button(label=_("OK"))
+        ok_button.set_image(Gtk.Image.new_from_icon_name("dialog-ok", Gtk.IconSize.BUTTON))
+        ok_button.set_always_show_image(True)
+        ok_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.OK))
+        dialog.add_action_widget(ok_button, Gtk.ResponseType.OK)
         entry = Gtk.Entry()
         entry.set_activates_default(True)
         box = dialog.get_content_area()
