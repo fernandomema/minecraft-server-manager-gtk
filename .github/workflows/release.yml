@@ -87,13 +87,10 @@ jobs:
         name: minecraft-server-manager-gtk-appimage
 
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ steps.version.outputs.version }}
-        release_name: Minecraft Server Manager ${{ steps.version.outputs.version }}
+        name: Minecraft Server Manager ${{ steps.version.outputs.version }}
         body: |
           ## Minecraft Server Manager GTK - Automated Release
 
@@ -125,28 +122,11 @@ jobs:
           - Java 8+ (for running Minecraft servers)
 
           **🔄 This is an automated release generated from the latest commit to main branch.**
+        files: |
+          minecraft-server-manager-gtk.flatpak
+          minecraft-server-manager-gtk-x86_64.AppImage
         draft: false
         prerelease: false
-
-    - name: Upload Flatpak to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./minecraft-server-manager-gtk.flatpak
-        asset_name: minecraft-server-manager-gtk.flatpak
-        asset_content_type: application/octet-stream
-
-    - name: Upload AppImage to Release
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./minecraft-server-manager-gtk-x86_64.AppImage
-        asset_name: minecraft-server-manager-gtk-x86_64.AppImage
-        asset_content_type: application/octet-stream
 
     - name: Update latest tag
       run: |
