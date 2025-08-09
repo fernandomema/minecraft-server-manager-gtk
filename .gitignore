@@ -111,6 +111,9 @@ servers/
 # Flatpak build files
 build-dir/
 .flatpak-builder/
+repo/
+builddir/
+*.flatpak
 
 # IDE files
 .vscode/
