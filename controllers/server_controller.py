@@ -219,6 +219,22 @@ class ServerController:
         server.jar = jar_filename
         return self.save_servers()
     
+    def remove_server(self, server: MinecraftServer) -> bool:
+        """Elimina un servidor de la lista (sin eliminar archivos)"""
+        try:
+            if server in self.servers:
+                # Detener el servidor si está ejecutándose
+                if self.is_server_running(server):
+                    self.kill_server(server)
+                
+                self.servers.remove(server)
+                self._log(f"Server '{server.name}' removed from management.\n")
+                return self.save_servers()
+            return False
+        except Exception as e:
+            self._log(f"Error removing server: {e}\n")
+            return False
+    
     def _read_stdout(self, process: subprocess.Popen, server: MinecraftServer):
         """Lee la salida estándar del proceso"""
         try:
