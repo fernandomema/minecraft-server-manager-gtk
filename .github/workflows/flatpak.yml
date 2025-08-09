@@ -16,11 +16,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Flatpak repo
-        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
-        with:
-          manifest-path: io.github.fernandomema.MinecraftServerManager.yml
-          cache-key: flatpak-builder-${{ github.sha }}
-          build-bundle: false
+        run: |
+          flatpak-builder --force-clean --repo=repo build-dir io.github.fernandomema.MinecraftServerManager.yml
 
       - name: Export Flatpak repo for GitHub Pages
         run: |
