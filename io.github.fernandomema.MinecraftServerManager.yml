@@ -35,6 +35,10 @@ modules:
       - cp -r controllers models utils views ${FLATPAK_DEST}/bin/
       - install -Dm644 io.github.fernandomema.MinecraftServerManager.desktop ${FLATPAK_DEST}/share/applications/io.github.fernandomema.MinecraftServerManager.desktop
       - install -Dm644 io.github.fernandomema.MinecraftServerManager.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/io.github.fernandomema.MinecraftServerManager.svg
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager-128.png ${FLATPAK_DEST}/share/icons/hicolor/128x128/apps/io.github.fernandomema.MinecraftServerManager.png
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager-64.png ${FLATPAK_DEST}/share/icons/hicolor/64x64/apps/io.github.fernandomema.MinecraftServerManager.png
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager-48.png ${FLATPAK_DEST}/share/icons/hicolor/48x48/apps/io.github.fernandomema.MinecraftServerManager.png
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.fernandomema.MinecraftServerManager.metainfo.xml
     sources:
       - type: dir
         path: .

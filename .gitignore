@@ -141,3 +141,8 @@ screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
 !screenshots/.gitkeep
+
+# Generated icon files
+*-48.png
+*-64.png
+*-128.png
