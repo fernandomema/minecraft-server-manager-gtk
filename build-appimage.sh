@@ -94,6 +94,9 @@ if [ "${0##*/}" = "minecraft-server-manager-gtk-x86_64.AppImage" ]; then
     exec "$TMPDIR/AppDir/AppRun" "$@"
 fi
 
+# Ensure the script stops before reaching the embedded archive
+exit 0
+
 __ARCHIVE_START__
 SELFEXTRACT_EOF
 
