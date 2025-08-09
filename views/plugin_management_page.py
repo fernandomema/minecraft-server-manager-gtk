@@ -127,10 +127,27 @@ class PluginManagementPage:
             cell.set_property("pixbuf", default_icon)
     
     def _download_icon_async(self, icon_url, plugin_name, cell, plugin_type):
-        """Descarga un icono de forma asíncrona (fallback si no se precargó)"""
-        # Si ya está en proceso de descarga por precarga, simplemente usar icono por defecto por ahora
-        default_icon = self.default_plugin_icon if plugin_type == "plugin" else self.default_mod_icon
-        cell.set_property("pixbuf", default_icon)
+        """Descarga un icono de forma asíncrona usando urllib y actualiza la celda"""
+
+        def download_icon():
+            try:
+                with urllib.request.urlopen(icon_url) as response:
+                    data = response.read()
+
+                loader = GdkPixbuf.PixbufLoader.new()
+                loader.write(data)
+                loader.close()
+                pixbuf = loader.get_pixbuf()
+                scaled_pixbuf = pixbuf.scale_simple(24, 24, GdkPixbuf.InterpType.BILINEAR)
+
+                self.icon_cache[icon_url] = scaled_pixbuf
+                GLib.idle_add(cell.set_property, "pixbuf", scaled_pixbuf)
+            except Exception:
+                default_icon = self.default_plugin_icon if plugin_type == "plugin" else self.default_mod_icon
+                self.icon_cache[icon_url] = default_icon
+                GLib.idle_add(cell.set_property, "pixbuf", default_icon)
+
+        threading.Thread(target=download_icon, daemon=True).start()
 
     def _detect_plugin_type(self, filename: str) -> str:
         """Detecta si un archivo es un plugin o mod basado en su ubicación y nombre"""
