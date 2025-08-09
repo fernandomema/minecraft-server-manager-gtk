@@ -1,32 +1,36 @@
-"""
-Utilidades para manejo de archivos y configuraciones
-"""
+"""Utilidades para manejo de archivos y configuraciones"""
 import json
+import logging
 import os
-from typing import List, Dict, Any
+from typing import Any, Dict, List, Union
 
 
-def load_json_file(file_path: str) -> List[Dict[str, Any]]:
+JSONData = Union[Dict[str, Any], List[Any]]
+
+
+def load_json_file(file_path: str) -> JSONData:
     """Carga un archivo JSON y retorna los datos"""
-    if os.path.exists(file_path):
-        try:
-            with open(file_path, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error loading JSON file {file_path}: {e}")
-            return []
-    return []
+    if not os.path.exists(file_path):
+        logging.error("JSON file not found: %s", file_path)
+        raise FileNotFoundError(f"JSON file not found: {file_path}")
+
+    try:
+        with open(file_path, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        logging.error("Error loading JSON file %s: %s", file_path, e)
+        raise
 
 
-def save_json_file(file_path: str, data: List[Dict[str, Any]]) -> bool:
+def save_json_file(file_path: str, data: JSONData) -> bool:
     """Guarda datos en un archivo JSON"""
     try:
         with open(file_path, "w") as f:
             json.dump(data, f, indent=4)
         return True
     except Exception as e:
-        print(f"Error saving JSON file {file_path}: {e}")
-        return False
+        logging.error("Error saving JSON file %s: %s", file_path, e)
+        raise
 
 
 def ensure_directory_exists(directory_path: str) -> bool:

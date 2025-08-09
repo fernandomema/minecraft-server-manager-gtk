@@ -40,16 +40,21 @@ class PluginController:
     def _load_plugin_metadata(self, server_path: str) -> Dict[str, Dict]:
         """Carga los metadatos de plugins de un servidor"""
         metadata_file = self._get_plugin_metadata_file(server_path)
+        if not os.path.exists(metadata_file):
+            return {}
         try:
-            return load_json_file(metadata_file) if os.path.exists(metadata_file) else {}
-        except Exception:
+            data = load_json_file(metadata_file)
+            return data if isinstance(data, dict) else {}
+        except Exception as e:
+            GLib.idle_add(self._log, f"Error loading plugin metadata: {e}\n")
             return {}
     
     def _save_plugin_metadata(self, server_path: str, metadata: Dict[str, Dict]) -> bool:
         """Guarda los metadatos de plugins de un servidor"""
         metadata_file = self._get_plugin_metadata_file(server_path)
         try:
-            return save_json_file(metadata_file, metadata)
+            save_json_file(metadata_file, metadata)
+            return True
         except Exception as e:
             GLib.idle_add(self._log, f"Error saving plugin metadata: {e}\n")
             return False
