@@ -116,17 +116,28 @@ class UISetup:
         header_bar.set_custom_title(header_server_selector)
 
         # Control buttons
-        header_start_button = Gtk.Button(label=_("Start"))
+        buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        buttons_box.get_style_context().add_class("linked")
+
+        header_start_button = Gtk.Button.new_from_icon_name(
+            "media-playback-start-symbolic", Gtk.IconSize.BUTTON
+        )
         header_start_button.connect("clicked", callbacks['on_start_server_clicked'])
-        header_bar.pack_end(header_start_button)
+        buttons_box.pack_start(header_start_button, False, False, 0)
 
-        header_stop_button = Gtk.Button(label=_("Stop"))
+        header_stop_button = Gtk.Button.new_from_icon_name(
+            "media-playback-stop-symbolic", Gtk.IconSize.BUTTON
+        )
         header_stop_button.connect("clicked", callbacks['on_stop_server_clicked'])
-        header_bar.pack_end(header_stop_button)
+        buttons_box.pack_start(header_stop_button, False, False, 0)
 
-        header_kill_button = Gtk.Button(label=_("Kill"))
+        header_kill_button = Gtk.Button.new_from_icon_name(
+            "process-stop-symbolic", Gtk.IconSize.BUTTON
+        )
         header_kill_button.connect("clicked", callbacks['on_kill_server_clicked'])
-        header_bar.pack_end(header_kill_button)
+        buttons_box.pack_start(header_kill_button, False, False, 0)
+
+        header_bar.pack_end(buttons_box)
 
         return {
             'header_server_selector': header_server_selector,
