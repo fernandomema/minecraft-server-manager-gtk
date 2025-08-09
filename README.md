@@ -125,3 +125,21 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 If you encounter any issues or have suggestions, please [open an issue](https://github.com/fernandomema/minecraft-server-manager-gtk/issues) on GitHub.
+
+## Translations
+
+To add a new translation:
+
+1. Extract strings with `xgettext`:
+   ```bash
+   xgettext --language=Python --keyword=_ --output=locale/messages.pot $(find . -name "*.py")
+   ```
+2. Create a `.po` file for your locale (replace `es` with the desired code):
+   ```bash
+   msginit --locale=es --input=locale/messages.pot --output-file=locale/es/LC_MESSAGES/minecraft-server-manager-gtk.po
+   ```
+3. Compile the translation to a `.mo` file:
+   ```bash
+   msgfmt locale/es/LC_MESSAGES/minecraft-server-manager-gtk.po --output-file=locale/es/LC_MESSAGES/minecraft-server-manager-gtk.mo
+   ```
+4. Run the application. It will use available translations automatically if the locale is set.

@@ -4,8 +4,11 @@ Handles console output, logging, and auto-scroll functionality
 """
 import gi
 import re
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+
+_ = gettext.gettext
 
 
 class ConsoleManager:

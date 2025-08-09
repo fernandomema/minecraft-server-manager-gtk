@@ -3,12 +3,15 @@ Plugin Management Page for the Minecraft Server Manager
 Contains all UI and logic related to plugin management
 """
 import gi
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GdkPixbuf, GLib
 import urllib.request
 import threading
 import os
 import tempfile
+
+_ = gettext.gettext
 
 from models.server import MinecraftServer
 from models.plugin import Plugin
@@ -73,13 +76,13 @@ class PluginManagementPage:
 
         # Título de la página
         title_label = Gtk.Label()
-        title_label.set_markup("<b>Plugin Manager</b>")
+        title_label.set_markup(_("<b>Plugin Manager</b>"))
         title_label.set_halign(Gtk.Align.START)
         title_label.set_margin_bottom(12)
         plugin_page.pack_start(title_label, False, False, 0)
 
         # Etiqueta de información del servidor
-        self.plugin_server_label = Gtk.Label(label="Select a server to manage plugins.")
+        self.plugin_server_label = Gtk.Label(label=_("Select a server to manage plugins."))
         plugin_page.pack_start(self.plugin_server_label, False, False, 0)
 
         # Sección de plugins locales
@@ -159,7 +162,7 @@ class PluginManagementPage:
 
     def _setup_local_plugins_section(self, container):
         """Configura la sección de plugins locales"""
-        frame = Gtk.Frame(label="Local Plugins/Mods")
+        frame = Gtk.Frame(label=_("Local Plugins/Mods"))
         container.pack_start(frame, True, True, 0)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -171,26 +174,26 @@ class PluginManagementPage:
         
         # Columna de icono
         icon_renderer = Gtk.CellRendererPixbuf()
-        icon_column = Gtk.TreeViewColumn("Icon", icon_renderer)
+        icon_column = Gtk.TreeViewColumn(_("Icon"), icon_renderer)
         icon_column.set_cell_data_func(icon_renderer, self._render_icon_cell)
         icon_column.set_fixed_width(50)
         self.local_plugin_view.append_column(icon_column)
         
         # Columna de tipo
         type_renderer = Gtk.CellRendererText()
-        type_column = Gtk.TreeViewColumn("Type", type_renderer, text=0)
+        type_column = Gtk.TreeViewColumn(_("Type"), type_renderer, text=0)
         type_column.set_fixed_width(80)
         self.local_plugin_view.append_column(type_column)
         
         # Columna de nombre
         name_renderer = Gtk.CellRendererText()
-        name_column = Gtk.TreeViewColumn("Plugin/Mod Name", name_renderer, text=2)
+        name_column = Gtk.TreeViewColumn(_("Plugin/Mod Name"), name_renderer, text=2)
         name_column.set_expand(True)
         self.local_plugin_view.append_column(name_column)
         
         # Columna de método de instalación
         method_renderer = Gtk.CellRendererText()
-        method_column = Gtk.TreeViewColumn("Install Method", method_renderer, text=3)
+        method_column = Gtk.TreeViewColumn(_("Install Method"), method_renderer, text=3)
         method_column.set_fixed_width(120)
         self.local_plugin_view.append_column(method_column)
 
@@ -204,21 +207,21 @@ class PluginManagementPage:
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         vbox.pack_start(hbox, False, False, 0)
 
-        add_button = Gtk.Button(label="Add Local Plugin")
+        add_button = Gtk.Button(label=_("Add Local Plugin"))
         add_button.connect("clicked", self._on_add_local_plugin_clicked)
         hbox.pack_start(add_button, False, False, 0)
 
-        remove_button = Gtk.Button(label="Remove Selected")
+        remove_button = Gtk.Button(label=_("Remove Selected"))
         remove_button.connect("clicked", self._on_remove_local_plugin_clicked)
         hbox.pack_start(remove_button, False, False, 0)
         
-        update_button = Gtk.Button(label="Update Selected")
+        update_button = Gtk.Button(label=_("Update Selected"))
         update_button.connect("clicked", self._on_update_local_plugin_clicked)
         hbox.pack_start(update_button, False, False, 0)
 
     def _setup_online_search_section(self, container):
         """Configura la sección de búsqueda online"""
-        frame = Gtk.Frame(label="Online Search")
+        frame = Gtk.Frame(label=_("Online Search"))
         container.pack_start(frame, True, True, 0)
 
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -229,23 +232,23 @@ class PluginManagementPage:
         vbox.pack_start(search_hbox, False, False, 0)
 
         # Selector de tipo de contenido
-        type_label = Gtk.Label(label="Search for:")
+        type_label = Gtk.Label(label=_("Search for:"))
         search_hbox.pack_start(type_label, False, False, 0)
 
         self.search_type_combo = Gtk.ComboBoxText()
-        self.search_type_combo.append("plugin", "Plugins")
-        self.search_type_combo.append("mod", "Mods")
-        self.search_type_combo.append("", "Both")
+        self.search_type_combo.append("plugin", _("Plugins"))
+        self.search_type_combo.append("mod", _("Mods"))
+        self.search_type_combo.append("", _("Both"))
         self.search_type_combo.set_active(2)  # Por defecto "Both"
         self.search_type_combo.connect("changed", self._on_search_type_changed)
         search_hbox.pack_start(self.search_type_combo, False, False, 0)
 
         self.search_entry = Gtk.Entry()
-        self.search_entry.set_placeholder_text("Search plugins/mods...")
+        self.search_entry.set_placeholder_text(_("Search plugins/mods..."))
         self.search_entry.connect("activate", self._on_search_online_clicked)  # Buscar al presionar Enter
         search_hbox.pack_start(self.search_entry, True, True, 0)
 
-        search_button = Gtk.Button(label="Search Online")
+        search_button = Gtk.Button(label=_("Search Online"))
         search_button.connect("clicked", self._on_search_online_clicked)
         search_hbox.pack_start(search_button, False, False, 0)
 
@@ -255,13 +258,13 @@ class PluginManagementPage:
         
         # Columna de icono
         icon_renderer = Gtk.CellRendererPixbuf()
-        icon_column = Gtk.TreeViewColumn("Icon", icon_renderer)
+        icon_column = Gtk.TreeViewColumn(_("Icon"), icon_renderer)
         icon_column.set_cell_data_func(icon_renderer, self._render_online_icon_cell)
         icon_column.set_fixed_width(50)
         self.online_search_view.append_column(icon_column)
         
         # Columnas de texto
-        columns = [("Type", 0), ("Name", 1), ("Source", 2), ("Version", 3)]
+        columns = [(_("Type"), 0), (_("Name"), 1), (_("Source"), 2), (_("Version"), 3)]
         for title, index in columns:
             renderer = Gtk.CellRendererText()
             column = Gtk.TreeViewColumn(title, renderer, text=index)
@@ -281,11 +284,11 @@ class PluginManagementPage:
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         vbox.pack_start(hbox, False, False, 0)
 
-        download_button = Gtk.Button(label="Download Selected")
+        download_button = Gtk.Button(label=_("Download Selected"))
         download_button.connect("clicked", self._on_download_online_plugin_clicked)
         hbox.pack_start(download_button, False, False, 0)
 
-        info_button = Gtk.Button(label="View Info")
+        info_button = Gtk.Button(label=_("View Info"))
         info_button.connect("clicked", self._on_view_plugin_info_clicked)
         hbox.pack_start(info_button, False, False, 0)
 
@@ -297,7 +300,7 @@ class PluginManagementPage:
             return
 
         dialog = Gtk.FileChooserDialog(
-            title="Select Plugin JAR File",
+            title=_("Select Plugin JAR File"),
             parent=self.parent_window,
             action=Gtk.FileChooserAction.OPEN,
             buttons=(
@@ -308,7 +311,7 @@ class PluginManagementPage:
 
         # Filtro para archivos JAR
         filter_jar = Gtk.FileFilter()
-        filter_jar.set_name("JAR files")
+        filter_jar.set_name(_("JAR files"))
         filter_jar.add_pattern("*.jar")
         dialog.add_filter(filter_jar)
 
@@ -358,11 +361,11 @@ class PluginManagementPage:
         """Maneja el cambio en el tipo de búsqueda"""
         search_type = combo.get_active_id()
         if search_type == "plugin":
-            self.search_entry.set_placeholder_text("Search plugins...")
+            self.search_entry.set_placeholder_text(_("Search plugins..."))
         elif search_type == "mod":
-            self.search_entry.set_placeholder_text("Search mods...")
+            self.search_entry.set_placeholder_text(_("Search mods..."))
         else:
-            self.search_entry.set_placeholder_text("Search plugins/mods...")
+            self.search_entry.set_placeholder_text(_("Search plugins/mods..."))
 
     def _on_download_online_plugin_clicked(self, widget):
         """Maneja el clic en descargar plugin online"""
@@ -534,9 +537,9 @@ class PluginManagementPage:
     def update_plugin_info(self, server: MinecraftServer):
         """Actualiza la información de plugins"""
         if server:
-            self.plugin_server_label.set_text(f"Managing plugins for: {server.name}")
+            self.plugin_server_label.set_text(_("Managing plugins for: {name}").format(name=server.name))
         else:
-            self.plugin_server_label.set_text("Select a server to manage plugins.")
+            self.plugin_server_label.set_text(_("Select a server to manage plugins."))
 
     def on_plugins_updated(self, plugins):
         """Callback cuando se actualizan los plugins"""

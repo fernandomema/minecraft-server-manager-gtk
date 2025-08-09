@@ -3,8 +3,11 @@ UI Setup utilities for the Minecraft Server Manager
 Contains methods for setting up common UI components
 """
 import gi
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, Gdk
+
+_ = gettext.gettext
 
 
 class UISetup:
@@ -103,21 +106,21 @@ class UISetup:
 
         # Server Selector
         header_server_selector = Gtk.ComboBoxText()
-        header_server_selector.append_text("-- Add New Server --")
+        header_server_selector.append_text(_("-- Add New Server --"))
         header_server_selector.set_active(0)
         header_server_selector.connect("changed", callbacks['on_header_server_selected'])
         header_bar.set_custom_title(header_server_selector)
 
         # Control buttons
-        header_start_button = Gtk.Button(label="Start")
+        header_start_button = Gtk.Button(label=_("Start"))
         header_start_button.connect("clicked", callbacks['on_start_server_clicked'])
         header_bar.pack_end(header_start_button)
 
-        header_stop_button = Gtk.Button(label="Stop")
+        header_stop_button = Gtk.Button(label=_("Stop"))
         header_stop_button.connect("clicked", callbacks['on_stop_server_clicked'])
         header_bar.pack_end(header_stop_button)
 
-        header_kill_button = Gtk.Button(label="Kill")
+        header_kill_button = Gtk.Button(label=_("Kill"))
         header_kill_button.connect("clicked", callbacks['on_kill_server_clicked'])
         header_bar.pack_end(header_kill_button)
 
@@ -143,9 +146,9 @@ class UISetup:
         sidebar_list.set_selection_mode(Gtk.SelectionMode.SINGLE)
         
         # Elementos de la barra lateral
-        server_row = UISetup.create_sidebar_row("Server Management", "applications-system")
-        plugin_row = UISetup.create_sidebar_row("Plugin Manager", "application-x-addon")
-        config_row = UISetup.create_sidebar_row("Config Editor", "preferences-system")
+        server_row = UISetup.create_sidebar_row(_("Server Management"), "applications-system")
+        plugin_row = UISetup.create_sidebar_row(_("Plugin Manager"), "application-x-addon")
+        config_row = UISetup.create_sidebar_row(_("Config Editor"), "preferences-system")
         
         sidebar_list.add(server_row)
         sidebar_list.add(plugin_row)

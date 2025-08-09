@@ -3,15 +3,18 @@ Diálogo para añadir un nuevo servidor
 """
 import gi
 import os
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+
+_ = gettext.gettext
 
 from utils.file_utils import get_jar_files_in_directory
 
 
 class AddServerDialog(Gtk.Dialog):
     def __init__(self, parent):
-        super().__init__(title="Add New Minecraft Server", parent=parent, flags=0)
+        super().__init__(title=_("Add New Minecraft Server"), parent=parent, flags=0)
         self.add_buttons(
             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, 
             Gtk.STOCK_ADD, Gtk.ResponseType.OK
@@ -26,17 +29,17 @@ class AddServerDialog(Gtk.Dialog):
         box.set_spacing(10)
 
         # Server Name
-        name_label = Gtk.Label(label="Server Name:")
+        name_label = Gtk.Label(label=_("Server Name:"))
         self.name_entry = Gtk.Entry()
         box.pack_start(name_label, False, False, 0)
         box.pack_start(self.name_entry, False, False, 0)
 
         # Server Directory
-        dir_label = Gtk.Label(label="Server Directory:")
+        dir_label = Gtk.Label(label=_("Server Directory:"))
         self.dir_entry = Gtk.Entry()
         self.dir_entry.connect("changed", self._on_dir_entry_changed)
         
-        self.dir_button = Gtk.Button(label="Browse...")
+        self.dir_button = Gtk.Button(label=_("Browse..."))
         self.dir_button.connect("clicked", self._on_dir_button_clicked)
 
         dir_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
@@ -47,9 +50,9 @@ class AddServerDialog(Gtk.Dialog):
         box.pack_start(dir_hbox, False, False, 0)
 
         # Server JAR File (Dropdown)
-        jar_label = Gtk.Label(label="Server JAR File:")
+        jar_label = Gtk.Label(label=_("Server JAR File:"))
         self.jar_combobox = Gtk.ComboBoxText()
-        self.jar_combobox.append_text("DOWNLOAD_LATER")
+        self.jar_combobox.append_text(_("DOWNLOAD_LATER"))
         self.jar_combobox.set_active(0)
 
         box.pack_start(jar_label, False, False, 0)
@@ -60,7 +63,7 @@ class AddServerDialog(Gtk.Dialog):
     def _on_dir_button_clicked(self, widget):
         """Maneja el clic en el botón de seleccionar directorio"""
         dialog = Gtk.FileChooserDialog(
-            title="Select Server Directory",
+            title=_("Select Server Directory"),
             parent=self,
             action=Gtk.FileChooserAction.SELECT_FOLDER,
             buttons=(
@@ -77,7 +80,7 @@ class AddServerDialog(Gtk.Dialog):
     def _on_dir_entry_changed(self, entry):
         """Maneja cambios en el campo de directorio"""
         self.jar_combobox.remove_all()
-        self.jar_combobox.append_text("DOWNLOAD_LATER")
+        self.jar_combobox.append_text(_("DOWNLOAD_LATER"))
         self.jar_combobox.set_active(0)
 
         server_dir = entry.get_text()

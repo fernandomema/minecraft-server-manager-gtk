@@ -2,18 +2,21 @@
 Diálogo para descargar servidores
 """
 import gi
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+
+_ = gettext.gettext
 
 from controllers.download_controller import DownloadController
 
 
 class DownloadServerDialog(Gtk.Dialog):
     def __init__(self, parent):
-        super().__init__(title="Download Minecraft Server JAR", parent=parent, flags=0)
+        super().__init__(title=_("Download Minecraft Server JAR"), parent=parent, flags=0)
         self.add_buttons(
             Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, 
-            "_Download", Gtk.ResponseType.OK
+            _("_Download"), Gtk.ResponseType.OK
         )
 
         self.set_default_size(400, 200)
@@ -29,9 +32,9 @@ class DownloadServerDialog(Gtk.Dialog):
         box.set_spacing(10)
 
         # Server Type
-        type_label = Gtk.Label(label="Server Type:")
+        type_label = Gtk.Label(label=_("Server Type:"))
         self.type_combobox = Gtk.ComboBoxText()
-        self.type_combobox.append_text("Paper")
+        self.type_combobox.append_text(_("Paper"))
         self.type_combobox.set_active(0)
         self.type_combobox.connect("changed", self._on_server_type_changed)
 
@@ -39,7 +42,7 @@ class DownloadServerDialog(Gtk.Dialog):
         box.pack_start(self.type_combobox, False, False, 0)
 
         # Version
-        version_label = Gtk.Label(label="Version:")
+        version_label = Gtk.Label(label=_("Version:"))
         self.version_combobox = Gtk.ComboBoxText()
         box.pack_start(version_label, False, False, 0)
         box.pack_start(self.version_combobox, False, False, 0)
@@ -58,12 +61,12 @@ class DownloadServerDialog(Gtk.Dialog):
         """Maneja cambios en el tipo de servidor"""
         selected_type = combobox.get_active_text()
         self.version_combobox.remove_all()
-        self.status_label.set_text("Fetching versions...")
+        self.status_label.set_text(_("Fetching versions..."))
 
-        if selected_type == "Paper":
+        if selected_type == _("Paper"):
             self.download_controller.get_paper_versions_async(self._on_versions_loaded)
         else:
-            self.status_label.set_text("Unsupported server type.")
+            self.status_label.set_text(_("Unsupported server type."))
 
     def _on_versions_loaded(self, versions):
         """Maneja cuando se cargan las versiones"""
@@ -72,9 +75,9 @@ class DownloadServerDialog(Gtk.Dialog):
         
         if versions:
             self.version_combobox.set_active(0)
-            self.status_label.set_text("Versions loaded.")
+            self.status_label.set_text(_("Versions loaded."))
         else:
-            self.status_label.set_text("No versions found.")
+            self.status_label.set_text(_("No versions found."))
 
     def _on_status_update(self, message):
         """Actualiza el estado en la etiqueta"""

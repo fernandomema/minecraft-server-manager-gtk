@@ -6,9 +6,12 @@ import gi
 import os
 import yaml
 import re
+import gettext
 from typing import Dict, Any, List, Tuple
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GObject, Pango
+
+_ = gettext.gettext
 
 
 class ConfigEditorPage:
@@ -45,7 +48,7 @@ class ConfigEditorPage:
     def _setup_file_panel(self, container):
         """Configura el panel de archivos de configuración"""
         # Frame para la lista de archivos
-        file_frame = Gtk.Frame(label="Configuration Files")
+        file_frame = Gtk.Frame(label=_("Configuration Files"))
         file_frame.set_size_request(250, -1)
         container.pack_start(file_frame, False, False, 0)
         
@@ -58,7 +61,7 @@ class ConfigEditorPage:
         
         # Información del servidor seleccionado
         self.server_info_label = Gtk.Label()
-        self.server_info_label.set_markup("<i>Select a server to view config files</i>")
+        self.server_info_label.set_markup(_("<i>Select a server to view config files</i>"))
         self.server_info_label.set_halign(Gtk.Align.START)
         file_box.pack_start(self.server_info_label, False, False, 0)
         
@@ -75,7 +78,7 @@ class ConfigEditorPage:
         
         # Columna para nombre del archivo
         renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("File", renderer, text=0)
+        column = Gtk.TreeViewColumn(_("File"), renderer, text=0)
         self.file_tree.append_column(column)
         
         # Conectar señal de selección
@@ -88,12 +91,12 @@ class ConfigEditorPage:
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         file_box.pack_start(button_box, False, False, 0)
         
-        self.refresh_button = Gtk.Button(label="Refresh")
+        self.refresh_button = Gtk.Button(label=_("Refresh"))
         self.refresh_button.set_sensitive(False)
         self.refresh_button.connect("clicked", self._on_refresh_files)
         button_box.pack_start(self.refresh_button, False, False, 0)
         
-        self.save_button = Gtk.Button(label="Save")
+        self.save_button = Gtk.Button(label=_("Save"))
         self.save_button.set_sensitive(False)
         self.save_button.connect("clicked", self._on_save_config)
         button_box.pack_start(self.save_button, False, False, 0)
@@ -101,7 +104,7 @@ class ConfigEditorPage:
     def _setup_editor_panel(self, container):
         """Configura el panel del editor de configuración"""
         # Frame para el editor
-        editor_frame = Gtk.Frame(label="Configuration Editor")
+        editor_frame = Gtk.Frame(label=_("Configuration Editor"))
         container.pack_start(editor_frame, True, True, 0)
         
         editor_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -113,7 +116,7 @@ class ConfigEditorPage:
         
         # Información del archivo actual
         self.file_info_label = Gtk.Label()
-        self.file_info_label.set_markup("<i>Select a configuration file to edit</i>")
+        self.file_info_label.set_markup(_("<i>Select a configuration file to edit</i>"))
         self.file_info_label.set_halign(Gtk.Align.START)
         editor_box.pack_start(self.file_info_label, False, False, 0)
         
@@ -139,11 +142,11 @@ class ConfigEditorPage:
         """Selecciona un servidor y carga sus archivos de configuración"""
         self.selected_server = server
         if server:
-            self.server_info_label.set_markup(f"<b>Server:</b> {server.name}")
+            self.server_info_label.set_markup(_("<b>Server:</b> {name}").format(name=server.name))
             self.refresh_button.set_sensitive(True)
             self._load_config_files()
         else:
-            self.server_info_label.set_markup("<i>Select a server to view config files</i>")
+            self.server_info_label.set_markup(_("<i>Select a server to view config files</i>"))
             self.refresh_button.set_sensitive(False)
             self._clear_file_list()
 
@@ -171,13 +174,13 @@ class ConfigEditorPage:
             if os.path.exists(file_path):
                 # Determinar la categoría
                 if config_file.startswith("config/"):
-                    category = "Paper Config"
+                    category = _("Paper Config")
                     filename = os.path.basename(config_file)
                 elif config_file.endswith(".yml"):
-                    category = "Server Config"
+                    category = _("Server Config")
                     filename = config_file
                 else:
-                    category = "Properties"
+                    category = _("Properties")
                     filename = config_file
                 
                 # Buscar o crear categoría

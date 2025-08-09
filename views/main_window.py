@@ -3,8 +3,11 @@ Ventana principal de la aplicación Minecraft Server Manager
 """
 import gi
 import os
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib
+
+_ = gettext.gettext
 
 from controllers.server_controller import ServerController
 from controllers.download_controller import DownloadController
@@ -19,7 +22,7 @@ from models.server import MinecraftServer
 
 class MinecraftServerManager(Gtk.Window):
     def __init__(self):
-        Gtk.Window.__init__(self, title="Minecraft Server Manager")
+        Gtk.Window.__init__(self, title=_("Minecraft Server Manager"))
         self.set_default_size(1000, 700)
 
         # Inicializar controladores
@@ -156,19 +159,19 @@ class MinecraftServerManager(Gtk.Window):
             return
             
         page_name = row.page_name  # Usar atributo Python normal
-        if page_name == "Server Management":
+        if page_name == _("Server Management"):
             self.content_stack.set_visible_child_name("server_management")
-        elif page_name == "Plugin Manager":
+        elif page_name == _("Plugin Manager"):
             self.content_stack.set_visible_child_name("plugin_manager")
-        elif page_name == "Config Editor":
+        elif page_name == _("Config Editor"):
             self.content_stack.set_visible_child_name("config_editor")
 
     def _load_initial_data(self):
         """Carga los datos iniciales"""
         self.server_controller.load_servers()
         self._refresh_server_list()
-        self.console_manager.log_to_console("Welcome to the Minecraft Server Manager console!\n")
-        self.console_manager.log_to_console("Server output will appear here.\n")
+        self.console_manager.log_to_console(_("Welcome to the Minecraft Server Manager console!\n"))
+        self.console_manager.log_to_console(_("Server output will appear here.\n"))
 
     # Event Handlers - delegated to page classes
     def _on_header_server_selected(self, combobox):
@@ -177,7 +180,7 @@ class MinecraftServerManager(Gtk.Window):
         if not selected_name:
             return
 
-        if selected_name == "-- Add New Server --":
+        if selected_name == _("-- Add New Server --"):
             self.server_management_page.show_add_server_dialog()
             # Resetear a servidor anterior si existe
             if self.selected_server:
@@ -231,7 +234,7 @@ class MinecraftServerManager(Gtk.Window):
     def _refresh_server_list(self):
         """Refresca el selector de servidores del header"""
         self.header_server_selector.remove_all()
-        self.header_server_selector.append_text("-- Add New Server --")
+        self.header_server_selector.append_text(_("-- Add New Server --"))
 
         servers = self.server_controller.get_servers()
         for server in servers:

@@ -4,8 +4,11 @@ Contains all UI and logic related to server configuration and management
 """
 import gi
 import os
+import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+
+_ = gettext.gettext
 
 from models.server import MinecraftServer
 from views.add_server_dialog import AddServerDialog
@@ -44,7 +47,7 @@ class ServerManagementPage:
 
         # Título de la página
         title_label = Gtk.Label()
-        title_label.set_markup("<b>Server Management</b>")
+        title_label.set_markup(_("<b>Server Management</b>"))
         title_label.set_halign(Gtk.Align.START)
         title_label.set_margin_bottom(12)
         server_page.pack_start(title_label, False, False, 0)
@@ -60,7 +63,7 @@ class ServerManagementPage:
     def _setup_server_configuration_section(self, container):
         """Configura la sección de configuración del servidor"""
         # Frame para la configuración del servidor
-        config_frame = Gtk.Frame(label="Server Configuration")
+        config_frame = Gtk.Frame(label=_("Server Configuration"))
         container.pack_start(config_frame, False, False, 0)
         
         config_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
@@ -72,7 +75,7 @@ class ServerManagementPage:
         
         # Información del servidor seleccionado
         self.server_info_label = Gtk.Label()
-        self.server_info_label.set_markup("<i>Select a server from the title bar to configure</i>")
+        self.server_info_label.set_markup(_("<i>Select a server from the title bar to configure</i>"))
         self.server_info_label.set_halign(Gtk.Align.START)
         config_box.pack_start(self.server_info_label, False, False, 0)
         
@@ -83,7 +86,7 @@ class ServerManagementPage:
         config_box.pack_start(config_grid, False, False, 0)
         
         # Server Name
-        name_label = Gtk.Label(label="Server Name:")
+        name_label = Gtk.Label(label=_("Server Name:"))
         name_label.set_halign(Gtk.Align.END)
         self.server_name_entry = Gtk.Entry()
         self.server_name_entry.set_sensitive(False)
@@ -93,7 +96,7 @@ class ServerManagementPage:
         config_grid.attach(self.server_name_entry, 1, 0, 2, 1)
         
         # Server Path
-        path_label = Gtk.Label(label="Server Path:")
+        path_label = Gtk.Label(label=_("Server Path:"))
         path_label.set_halign(Gtk.Align.END)
         self.server_path_entry = Gtk.Entry()
         self.server_path_entry.set_sensitive(False)
@@ -103,7 +106,7 @@ class ServerManagementPage:
         config_grid.attach(self.server_path_entry, 1, 1, 2, 1)
         
         # JAR File
-        jar_label = Gtk.Label(label="JAR File:")
+        jar_label = Gtk.Label(label=_("JAR File:"))
         jar_label.set_halign(Gtk.Align.END)
         self.server_jar_combo = Gtk.ComboBoxText()
         self.server_jar_combo.set_sensitive(False)
@@ -113,7 +116,7 @@ class ServerManagementPage:
         config_grid.attach(self.server_jar_combo, 1, 2, 1, 1)
         
         # Botón para descargar JAR
-        self.download_jar_button = Gtk.Button(label="Download JAR")
+        self.download_jar_button = Gtk.Button(label=_("Download JAR"))
         self.download_jar_button.set_sensitive(False)
         self.download_jar_button.connect("clicked", self._on_download_jar_clicked)
         config_grid.attach(self.download_jar_button, 2, 2, 1, 1)
@@ -123,12 +126,12 @@ class ServerManagementPage:
         action_box.set_halign(Gtk.Align.CENTER)
         config_box.pack_start(action_box, False, False, 12)
         
-        self.save_config_button = Gtk.Button(label="Save Configuration")
+        self.save_config_button = Gtk.Button(label=_("Save Configuration"))
         self.save_config_button.set_sensitive(False)
         self.save_config_button.connect("clicked", self._on_save_config_clicked)
         action_box.pack_start(self.save_config_button, False, False, 0)
         
-        self.refresh_jars_button = Gtk.Button(label="Refresh JARs")
+        self.refresh_jars_button = Gtk.Button(label=_("Refresh JARs"))
         self.refresh_jars_button.set_sensitive(False)
         self.refresh_jars_button.connect("clicked", self._on_refresh_jars_clicked)
         action_box.pack_start(self.refresh_jars_button, False, False, 0)
@@ -138,13 +141,13 @@ class ServerManagementPage:
         action_box.pack_start(separator, False, False, 6)
         
         # Botones de gestión del servidor
-        self.unlink_server_button = Gtk.Button(label="Unlink Server")
+        self.unlink_server_button = Gtk.Button(label=_("Unlink Server"))
         self.unlink_server_button.set_sensitive(False)
         self.unlink_server_button.get_style_context().add_class("warning-action")
         self.unlink_server_button.connect("clicked", self._on_unlink_server_clicked)
         action_box.pack_start(self.unlink_server_button, False, False, 0)
         
-        self.delete_server_button = Gtk.Button(label="Delete Server")
+        self.delete_server_button = Gtk.Button(label=_("Delete Server"))
         self.delete_server_button.set_sensitive(False)
         self.delete_server_button.get_style_context().add_class("destructive-action")
         self.delete_server_button.connect("clicked", self._on_delete_server_clicked)
@@ -229,11 +232,12 @@ class ServerManagementPage:
             flags=Gtk.DialogFlags.MODAL,
             message_type=Gtk.MessageType.WARNING,
             buttons=Gtk.ButtonsType.YES_NO,
-            text=f"Unlink Server '{self.selected_server.name}'?"
+            text=_("Unlink Server '{name}'?").format(name=self.selected_server.name)
         )
         dialog.format_secondary_text(
-            "This will remove the server from the manager but will NOT delete "
-            "the server files from your disk. The server data will remain intact."
+            _(
+                "This will remove the server from the manager but will NOT delete the server files from your disk. The server data will remain intact."
+            )
         )
 
         response = dialog.run()
