@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Archivo principal de la aplicación Minecraft Server Manager
 Punto de entrada simplificado que utiliza la arquitectura MVC

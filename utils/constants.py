@@ -2,9 +2,14 @@
 Constantes utilizadas en la aplicación Minecraft Server Manager
 """
 import os
+from pathlib import Path
+
+# Crear directorio de datos del usuario si no existe
+USER_DATA_DIR = os.path.join(Path.home(), ".local", "share", "minecraft-server-manager")
+os.makedirs(USER_DATA_DIR, exist_ok=True)
 
 # Archivos de configuración
-SERVER_CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "servers.json")
+SERVER_CONFIG_FILE = os.path.join(USER_DATA_DIR, "servers.json")
 
 # Mensajes de error
 EULA_ERROR_MESSAGE = "You need to agree to the EULA in order to run the server."

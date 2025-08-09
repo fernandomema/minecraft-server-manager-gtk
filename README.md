@@ -1,116 +1,99 @@
 # Minecraft Server Manager GTK
 
-Una aplicación con interfaz gráfica GTK para gestionar servidores de Minecraft.
+A GTK-based graphical application for managing Minecraft servers with plugin and mod support.
 
-## Estructura del Proyecto
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.6+-blue.svg)
+![GTK](https://img.shields.io/badge/GTK-3.0-green.svg)
 
-El proyecto ha sido refactorizado siguiendo el patrón MVC (Model-View-Controller):
+## Features
+
+- 🎮 **Server Management**: Create, start, stop, and configure Minecraft servers
+- 🔌 **Plugin & Mod Management**: Browse, download, and manage plugins from Modrinth
+- 🎨 **Colorized Console**: Real-time server output with syntax highlighting
+- ⚙️ **Configuration Editor**: Visual editor for YAML/YML server configuration files
+- 📥 **Automatic Downloads**: Download server JARs and plugins with ease
+- 🔍 **Smart Search**: Search and filter plugins vs mods with type detection
+- 🖼️ **Visual Icons**: Display plugin/mod icons from Modrinth
+- 📊 **Metadata Tracking**: Track installation methods and sources
+
+## Screenshots
+
+*Screenshots will be added here*
+
+## Installation
+
+### From Flathub (Recommended)
+```bash
+flatpak install flathub io.github.fernandomema.MinecraftServerManager
+```
+
+### From Source
+```bash
+git clone https://github.com/fernandomema/minecraft-server-manager-gtk.git
+cd minecraft-server-manager-gtk
+python3 main.py
+```
+
+## Dependencies
+
+- Python 3.6+
+- PyGObject (GTK 3.0)
+- PyYAML
+- Java 8+ (for running Minecraft servers)
+
+## Project Structure
+
+The project follows MVC (Model-View-Controller) architecture:
 
 ```
 minecraft-server-manager-gtk/
-├── main.py                     # Archivo original (respaldo)
-├── main_new.py                 # Nuevo punto de entrada
-├── servers.json               # Configuración de servidores
-├── models/                    # Modelos de datos
-│   ├── __init__.py
-│   ├── server.py             # Modelo de servidor
-│   └── plugin.py             # Modelo de plugin/mod
-├── views/                     # Interfaces de usuario
-│   ├── __init__.py
-│   ├── main_window.py        # Ventana principal
-│   ├── add_server_dialog.py  # Diálogo añadir servidor
-│   ├── download_server_dialog.py # Diálogo descarga
-│   └── eula_dialog.py        # Diálogo EULA
-├── controllers/               # Lógica de negocio
-│   ├── __init__.py
-│   ├── server_controller.py  # Controlador de servidores
-│   ├── download_controller.py # Controlador de descargas
-│   └── plugin_controller.py  # Controlador de plugins
-├── utils/                     # Utilidades
-│   ├── __init__.py
-│   ├── constants.py          # Constantes
-│   └── file_utils.py         # Utilidades de archivos
-└── servers/                   # Directorios de servidores
-    └── test/                  # Servidor de ejemplo
+├── main.py                     # Application entry point
+├── models/                     # Data models
+│   ├── server.py              # Server model
+│   └── plugin.py              # Plugin/mod model
+├── views/                      # User interface
+│   ├── main_window.py         # Main window
+│   ├── server_management_page.py  # Server management tab
+│   ├── plugin_management_page.py  # Plugin management tab
+│   ├── console_manager.py     # Server console
+│   └── ...
+├── controllers/                # Business logic
+│   ├── server_controller.py   # Server operations
+│   ├── plugin_controller.py   # Plugin/mod operations
+│   └── download_controller.py # Download management
+└── utils/                      # Utilities
+    ├── constants.py           # Application constants
+    └── file_utils.py          # File operations
 ```
 
-## Beneficios de la Refactorización
+## Usage
 
-### 1. **Separación de Responsabilidades**
-- **Models**: Representan los datos (Servidor, Plugin)
-- **Views**: Manejan la interfaz de usuario
-- **Controllers**: Contienen la lógica de negocio
+### Server Management
+1. Click "Add Server" to create a new server
+2. Choose server type (Paper, Spigot, etc.)
+3. Configure server settings
+4. Start/stop servers from the interface
 
-### 2. **Reutilización de Código**
-- Los controladores pueden ser reutilizados en diferentes vistas
-- Las acciones están centralizadas y son fáciles de mantener
+### Plugin Management
+1. Switch to the "Plugin Management" tab
+2. Search for plugins/mods using the search bar
+3. Filter by type (Plugin or Mod)
+4. Click download to install directly to your server
 
-### 3. **Mantenibilidad**
-- Cada archivo tiene una responsabilidad específica
-- Es más fácil encontrar y modificar funcionalidades
-- Mejor organización del código
+### Console
+- View real-time server output with colorized text
+- Auto-scrolling console for latest messages
+- Dark theme for better readability
 
-### 4. **Escalabilidad**
-- Fácil añadir nuevas funcionalidades
-- Estructura preparada para crecimiento
+## Contributing
 
-### 5. **Testabilidad**
-- Los controladores pueden ser probados independientemente
-- Separación clara entre lógica y presentación
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Componentes Principales
+## License
 
-### Models (models/)
-- `server.py`: Representa un servidor de Minecraft
-- `plugin.py`: Representa un plugin o mod
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Controllers (controllers/)
-- `server_controller.py`: Gestiona servidores (iniciar, parar, configurar)
-- `download_controller.py`: Maneja descargas de JARs
-- `plugin_controller.py`: Gestiona plugins y mods
+## Support
 
-### Views (views/)
-- `main_window.py`: Ventana principal refactorizada
-- `add_server_dialog.py`: Diálogo para añadir servidores
-- `download_server_dialog.py`: Diálogo para descargar JARs
-- `eula_dialog.py`: Diálogo para aceptar EULA
-
-### Utils (utils/)
-- `constants.py`: Constantes de la aplicación
-- `file_utils.py`: Utilidades para manejo de archivos
-
-## Uso
-
-### Ejecutar la Aplicación
-```bash
-python3 main_new.py
-```
-
-### Migración desde el Código Original
-El archivo `main.py` original se mantiene como respaldo. La nueva estructura es completamente compatible y ofrece las mismas funcionalidades.
-
-## Características
-
-- **Gestión de Servidores**: Añadir, iniciar, parar servidores
-- **Descarga de JARs**: Descarga automática de PaperMC
-- **Gestión de Plugins**: Administrar plugins y mods
-- **Consola Integrada**: Ver salida de servidores en tiempo real
-- **Búsqueda Online**: Buscar plugins en Modrinth
-
-## Próximas Mejoras
-
-Con esta nueva estructura es más fácil implementar:
-- Sistema de configuración avanzado
-- Soporte para más tipos de servidores
-- Descarga e instalación automática de plugins
-- Sistema de backups
-- Monitoreo de rendimiento
-- API REST para control remoto
-
-## Dependencias
-
-- Python 3.6+
-- PyGObject (Gtk 3.0)
-- Java (para ejecutar servidores)
-
-La refactorización mantiene todas las funcionalidades existentes mientras proporciona una base sólida para futuras mejoras.
+If you encounter any issues or have suggestions, please [open an issue](https://github.com/fernandomema/minecraft-server-manager-gtk/issues) on GitHub.
