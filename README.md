@@ -19,7 +19,14 @@ A GTK-based graphical application for managing Minecraft servers with plugin and
 
 ## Screenshots
 
-*Screenshots will be added here*
+**Server Management**
+![Server Management](screenshots/server.png)
+
+**Plugin Management**
+![Plugin Management](screenshots/plugins.png)
+
+**Configuration Editor**
+![Configuration Editor](screenshots/configs.png)
 
 ## Installation
 
