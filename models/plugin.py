@@ -32,6 +32,8 @@ class Plugin:
             return "Manual"
         elif self.install_method == "Modrinth":
             return "🌐 Modrinth"
+        elif self.install_method == "Spigot":
+            return "🟠 Spigot"
         elif self.install_method == "CurseForge":
             return "🔥 CurseForge"
         else:

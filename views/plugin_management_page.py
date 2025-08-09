@@ -104,7 +104,7 @@ class PluginManagementPage:
             cell.set_property("icon-name", "package-x-generic")
 
     def _render_online_icon_cell(self, column, cell, model, iter, data):
-        """Renderiza el icono según el tipo de plugin/mod online, descargando desde Modrinth si está disponible"""
+        """Renderiza el icono según el tipo de plugin/mod online, descargándolo de la fuente si está disponible"""
         plugin_type = model[iter][0]
         plugin_name = model[iter][1]
         
@@ -255,6 +255,17 @@ class PluginManagementPage:
         self.search_type_combo.connect("changed", self._on_search_type_changed)
         search_hbox.pack_start(self.search_type_combo, False, False, 0)
 
+        # Selector de fuente
+        source_label = Gtk.Label(label=_("Source:"))
+        search_hbox.pack_start(source_label, False, False, 0)
+
+        self.source_combo = Gtk.ComboBoxText()
+        self.source_combo.append("Modrinth", _("Modrinth"))
+        self.source_combo.append("Spigot", _("Spigot"))
+        self.source_combo.append("CurseForge", _("CurseForge"))
+        self.source_combo.set_active(0)
+        search_hbox.pack_start(self.source_combo, False, False, 0)
+
         self.search_entry = Gtk.Entry()
         self.search_entry.set_placeholder_text(_("Search plugins/mods..."))
         self.search_entry.connect("activate", self._on_search_online_clicked)  # Buscar al presionar Enter
@@ -381,14 +392,22 @@ class PluginManagementPage:
             self.console_manager.log_to_console("Please enter a search query.\n")
             return
 
-        # Obtener el tipo seleccionado
+        # Obtener el tipo y la fuente seleccionados
         search_type = self.search_type_combo.get_active_id()
         search_type_text = self.search_type_combo.get_active_text()
-        
-        self.console_manager.log_to_console(f"Searching for {search_type_text.lower()} with query: '{query}'\n")
-        
+        source = self.source_combo.get_active_id()
+
+        self.console_manager.log_to_console(
+            f"Searching {source} for {search_type_text.lower()} with query: '{query}'\n"
+        )
+
         self.online_search_store.clear()
-        self.plugin_controller.search_modrinth_plugins(query, self._on_search_results, search_type)
+        if source == "Spigot":
+            self.plugin_controller.search_spigot_plugins(query, self._on_search_results)
+        elif source == "CurseForge":
+            self.plugin_controller.search_curseforge_plugins(query, self._on_search_results, search_type)
+        else:
+            self.plugin_controller.search_modrinth_plugins(query, self._on_search_results, search_type)
 
     def _on_search_type_changed(self, combo):
         """Maneja el cambio en el tipo de búsqueda"""
@@ -475,13 +494,28 @@ class PluginManagementPage:
                 dialog.run()
                 dialog.destroy()
         
-        # Iniciar descarga
-        self.plugin_controller.download_modrinth_plugin(
-            plugin_name, 
-            project_id, 
-            self.selected_server.path, 
-            download_callback
-        )
+        # Iniciar descarga según la fuente
+        if plugin_source == "Spigot":
+            self.plugin_controller.download_spigot_plugin(
+                plugin_name,
+                project_id,
+                self.selected_server.path,
+                download_callback,
+            )
+        elif plugin_source == "CurseForge":
+            self.plugin_controller.download_curseforge_plugin(
+                plugin_name,
+                project_id,
+                self.selected_server.path,
+                download_callback,
+            )
+        else:
+            self.plugin_controller.download_modrinth_plugin(
+                plugin_name,
+                project_id,
+                self.selected_server.path,
+                download_callback,
+            )
 
     def _on_update_local_plugin_clicked(self, widget):
         """Maneja el clic en actualizar plugin local"""

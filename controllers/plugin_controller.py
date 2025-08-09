@@ -13,7 +13,11 @@ from typing import List, Dict, Optional, Callable
 from gi.repository import GLib
 
 from models.plugin import Plugin
-from utils.constants import MODRINTH_API_BASE_URL
+from utils.constants import (
+    MODRINTH_API_BASE_URL,
+    SPIGET_API_BASE_URL,
+    CURSEFORGE_API_BASE_URL,
+)
 from utils.file_utils import get_plugins_and_mods, load_json_file, save_json_file
 
 
@@ -266,6 +270,101 @@ class PluginController:
         
         threading.Thread(target=perform_search, daemon=True).start()
 
+    def search_spigot_plugins(self, query: str, callback: Callable[[List[Plugin]], None]):
+        """Busca plugins en Spigot (usando Spiget API) de forma asíncrona"""
+
+        def perform_search():
+            try:
+                encoded_query = urllib.parse.quote(query)
+                url = f"{SPIGET_API_BASE_URL}/search/resources/{encoded_query}?size=20"
+                request = urllib.request.Request(url)
+                request.add_header("User-Agent", "MinecraftServerManager/1.0")
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    data = json.loads(response.read().decode())
+
+                plugins = []
+                for item in data:
+                    name = item.get("name", "N/A")
+                    resource_id = str(item.get("id", ""))
+                    description = item.get("tag", "")
+                    plugin = Plugin(
+                        name=name,
+                        source="Spigot",
+                        version="Latest",
+                        description=description,
+                        install_method="Spigot",
+                    )
+                    plugin.project_id = resource_id
+                    plugin.project_type = "plugin"
+                    plugin.icon_url = f"{SPIGET_API_BASE_URL}/resources/{resource_id}/icon"
+                    plugins.append(plugin)
+
+                GLib.idle_add(self._log, f"Found {len(plugins)} plugins from Spigot.\n")
+                GLib.idle_add(callback, plugins)
+
+            except Exception as e:
+                GLib.idle_add(self._log, f"DEBUG: Error searching Spigot: {e}\n")
+                GLib.idle_add(callback, [])
+
+        threading.Thread(target=perform_search, daemon=True).start()
+
+    def search_curseforge_plugins(self, query: str, callback: Callable[[List[Plugin]], None], search_type: str = ""):
+        """Busca plugins o mods en CurseForge de forma asíncrona"""
+
+        def perform_search():
+            api_key = os.environ.get("CURSEFORGE_API_KEY")
+            if not api_key:
+                GLib.idle_add(self._log, "DEBUG: Missing CurseForge API key\n")
+                GLib.idle_add(callback, [])
+                return
+
+            try:
+                encoded_query = urllib.parse.quote(query)
+                url = f"{CURSEFORGE_API_BASE_URL}/mods/search?gameId=432&searchFilter={encoded_query}"
+
+                # Filtrar por tipo si se especifica (mods vs plugins)
+                if search_type == "mod":
+                    url += "&classId=6"
+                elif search_type == "plugin":
+                    url += "&classId=5"
+
+                request = urllib.request.Request(url)
+                request.add_header("x-api-key", api_key)
+                request.add_header("User-Agent", "MinecraftServerManager/1.0")
+
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    data = json.loads(response.read().decode())
+
+                plugins = []
+                for item in data.get("data", []):
+                    name = item.get("name", "N/A")
+                    description = item.get("summary", "")
+                    project_id = str(item.get("id", ""))
+                    logo = item.get("logo") or {}
+                    icon_url = logo.get("url", "")
+                    class_id = item.get("classId", 6)
+                    project_type = "plugin" if class_id == 5 else "mod"
+                    plugin = Plugin(
+                        name=name,
+                        source="CurseForge",
+                        version="Latest",
+                        description=description,
+                        install_method="CurseForge",
+                    )
+                    plugin.project_id = project_id
+                    plugin.icon_url = icon_url
+                    plugin.project_type = project_type
+                    plugins.append(plugin)
+
+                GLib.idle_add(self._log, f"Found {len(plugins)} results from CurseForge.\n")
+                GLib.idle_add(callback, plugins)
+
+            except Exception as e:
+                GLib.idle_add(self._log, f"DEBUG: Error searching CurseForge: {e}\n")
+                GLib.idle_add(callback, [])
+
+        threading.Thread(target=perform_search, daemon=True).start()
+
     def download_modrinth_plugin(self, plugin_name: str, project_id: str, server_path: str, callback: Callable[[bool, str], None]):
         """Descarga un plugin desde Modrinth de forma asíncrona
         
@@ -384,6 +483,96 @@ class PluginController:
         
         threading.Thread(target=perform_download, daemon=True).start()
 
+    def download_spigot_plugin(self, plugin_name: str, resource_id: str, server_path: str, callback: Callable[[bool, str], None]):
+        """Descarga un plugin desde Spigot de forma asíncrona"""
+
+        def perform_download():
+            try:
+                GLib.idle_add(self._log, f"Starting download of {plugin_name} from Spigot...\n")
+                download_url = f"{SPIGET_API_BASE_URL}/resources/{resource_id}/download"
+                request = urllib.request.Request(download_url)
+                request.add_header("User-Agent", "MinecraftServerManager/1.0")
+                plugins_dir = os.path.join(server_path, "plugins")
+                os.makedirs(plugins_dir, exist_ok=True)
+                file_path = os.path.join(plugins_dir, f"{plugin_name}.jar")
+                with urllib.request.urlopen(request, timeout=20) as response, open(file_path, "wb") as out_file:
+                    out_file.write(response.read())
+
+                plugin_name_clean = os.path.splitext(os.path.basename(file_path))[0]
+                self._add_plugin_metadata(server_path, plugin_name_clean, "Spigot", resource_id, "plugin")
+
+                GLib.idle_add(callback, True, f"Successfully downloaded {plugin_name}")
+                GLib.idle_add(self._log, f"Download completed: {os.path.basename(file_path)}\n")
+
+            except urllib.error.HTTPError as e:
+                error_msg = f"HTTP Error {e.code}: {e.reason}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+            except Exception as e:
+                error_msg = f"Download error: {str(e)}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+
+        threading.Thread(target=perform_download, daemon=True).start()
+
+    def download_curseforge_plugin(self, plugin_name: str, project_id: str, server_path: str, callback: Callable[[bool, str], None]):
+        """Descarga un mod o plugin desde CurseForge de forma asíncrona"""
+
+        def perform_download():
+            api_key = os.environ.get("CURSEFORGE_API_KEY")
+            if not api_key:
+                GLib.idle_add(callback, False, "Missing CurseForge API key")
+                return
+
+            try:
+                GLib.idle_add(self._log, f"Starting download of {plugin_name} from CurseForge...\n")
+                files_url = f"{CURSEFORGE_API_BASE_URL}/mods/{project_id}/files"
+                request = urllib.request.Request(files_url)
+                request.add_header("x-api-key", api_key)
+                request.add_header("User-Agent", "MinecraftServerManager/1.0")
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    files_data = json.loads(response.read().decode())
+
+                if not files_data.get("data"):
+                    GLib.idle_add(callback, False, "No files available for this project")
+                    return
+
+                latest_file = files_data["data"][0]
+                download_url = latest_file.get("downloadUrl")
+                filename = latest_file.get("fileName", f"{plugin_name}.jar")
+
+                request = urllib.request.Request(download_url)
+                request.add_header("User-Agent", "MinecraftServerManager/1.0")
+
+                # Determinar directorio según tipo
+                project_type = "plugin" if latest_file.get("classId") == 5 else "mod"
+                if project_type == "plugin":
+                    target_dir = os.path.join(server_path, "plugins")
+                else:
+                    target_dir = os.path.join(server_path, "mods")
+                os.makedirs(target_dir, exist_ok=True)
+
+                file_path = os.path.join(target_dir, filename)
+                with urllib.request.urlopen(request, timeout=20) as response, open(file_path, "wb") as out_file:
+                    out_file.write(response.read())
+
+                plugin_name_clean = os.path.splitext(filename)[0]
+                self._add_plugin_metadata(server_path, plugin_name_clean, "CurseForge", project_id, project_type)
+
+                GLib.idle_add(callback, True, f"Successfully downloaded {plugin_name}")
+                GLib.idle_add(self._log, f"Download completed: {filename}\n")
+
+            except urllib.error.HTTPError as e:
+                error_msg = f"HTTP Error {e.code}: {e.reason}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+            except Exception as e:
+                error_msg = f"Download error: {str(e)}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+
+        threading.Thread(target=perform_download, daemon=True).start()
+
     def update_plugin(self, plugin: Plugin, server_path: str, callback: Callable[[bool, str], None]):
         """Actualiza un plugin instalado desde Modrinth
 
@@ -392,6 +581,10 @@ class PluginController:
             server_path: Ruta del servidor donde está instalado el plugin
             callback: Función callback con (success: bool, message: str)
         """
+
+        if getattr(plugin, "install_method", "Modrinth") != "Modrinth":
+            GLib.idle_add(callback, False, f"Update from {plugin.install_method} is not supported")
+            return
 
         def perform_update():
             if not plugin.project_id:

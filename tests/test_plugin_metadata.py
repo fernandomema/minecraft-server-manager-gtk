@@ -28,3 +28,9 @@ def test_add_plugin_metadata_capitalizes_install_method(tmp_path):
 def test_get_install_method_display():
     plugin = Plugin(name="TestPlugin", install_method="Modrinth")
     assert plugin.get_install_method_display() == "🌐 Modrinth"
+
+    spigot = Plugin(name="SpigotPlugin", install_method="Spigot")
+    assert spigot.get_install_method_display() == "🟠 Spigot"
+
+    curse = Plugin(name="CFPlugin", install_method="CurseForge")
+    assert curse.get_install_method_display() == "🔥 CurseForge"

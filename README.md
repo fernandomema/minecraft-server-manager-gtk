@@ -9,12 +9,12 @@ A GTK-based graphical application for managing Minecraft servers with plugin and
 ## Features
 
 - 🎮 **Server Management**: Create, start, stop, and configure Minecraft servers
-- 🔌 **Plugin & Mod Management**: Browse, download, and manage plugins from Modrinth
+- 🔌 **Plugin & Mod Management**: Browse, download, and manage plugins from Modrinth, Spigot, and CurseForge
 - 🎨 **Colorized Console**: Real-time server output with syntax highlighting
 - ⚙️ **Configuration Editor**: Visual editor for YAML/YML server configuration files
 - 📥 **Automatic Downloads**: Download server JARs and plugins with ease
 - 🔍 **Smart Search**: Search and filter plugins vs mods with type detection
-- 🖼️ **Visual Icons**: Display plugin/mod icons from Modrinth
+- 🖼️ **Visual Icons**: Display plugin/mod icons from multiple sources
 - 📊 **Metadata Tracking**: Track installation methods and sources
 
 ## Screenshots

@@ -17,6 +17,8 @@ EULA_ERROR_MESSAGE = "You need to agree to the EULA in order to run the server."
 # URLs de APIs
 PAPER_API_BASE_URL = "https://api.papermc.io/v2"
 MODRINTH_API_BASE_URL = "https://api.modrinth.com/v2"
+SPIGET_API_BASE_URL = "https://api.spiget.org/v2"
+CURSEFORGE_API_BASE_URL = "https://api.curseforge.com/v1"
 
 # Configuración de servidor por defecto
 DEFAULT_JAVA_MEMORY = "1024M"
