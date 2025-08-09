@@ -1,0 +1,42 @@
+app-id: io.github.fernandomema.MinecraftServerManager
+runtime: org.gnome.Platform
+runtime-version: '46'
+sdk: org.gnome.Sdk
+command: minecraft-server-manager
+
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+  # Wayland access
+  - --socket=wayland
+  # Network access for downloading plugins/mods and server jars
+  - --share=network
+  # Filesystem access for server management
+  - --filesystem=home
+  # Allow spawning processes (for running servers)
+  - --talk-name=org.freedesktop.Flatpak
+
+modules:
+  - name: python3-pyyaml
+    buildsystem: simple
+    build-commands:
+      - pip3 install --verbose --exists-action=i --no-index --find-links="file://${PWD}"
+        --prefix=${FLATPAK_DEST} "PyYAML" --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/cd/e5/af35f7ea75cf72f2cd079c95ee16797de7cd71f29ea7c68ae5ce7be1eda02/PyYAML-6.0.1.tar.gz
+        sha256: bfdf460b1736c775f2ba9f6a92bca30bc2095067b8a9d77876d1fad6cc3b4a43
+
+  - name: minecraft-server-manager
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 main.py ${FLATPAK_DEST}/bin/minecraft-server-manager
+      - cp -r controllers models utils views ${FLATPAK_DEST}/bin/
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager.desktop ${FLATPAK_DEST}/share/applications/io.github.fernandomema.MinecraftServerManager.desktop
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/io.github.fernandomema.MinecraftServerManager.svg
+      - install -Dm644 io.github.fernandomema.MinecraftServerManager.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.fernandomema.MinecraftServerManager.metainfo.xml
+    sources:
+      - type: git
+        url: https://github.com/fernandomema/minecraft-server-manager-gtk.git
+        branch: main
