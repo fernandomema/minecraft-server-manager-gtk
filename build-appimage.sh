@@ -40,28 +40,34 @@ echo "Creating AppRun script..."
 cat > "$APPDIR/AppRun" << 'EOF'
 #!/bin/bash
 HERE="$(dirname "$(readlink -f "${0}")")"
-export PATH="${HERE}/usr/bin:${PATH}"
+export PATH="${HERE}/usr/bin:/usr/bin:/bin"
 export PYTHONPATH="${HERE}/usr/bin:${PYTHONPATH}"
 
 # Isolate from problematic snap environment
 unset LD_LIBRARY_PATH
 unset LD_PRELOAD
 
-# Check if required dependencies are available
-if ! command -v python3 &> /dev/null; then
+# Prefer system Python interpreter
+PYTHON_BIN="/usr/bin/python3"
+if [ ! -x "$PYTHON_BIN" ]; then
+    PYTHON_BIN="$(command -v python3 2>/dev/null)"
+fi
+
+if [ -z "$PYTHON_BIN" ]; then
     echo "Error: Python 3 is required but not found on this system."
     echo "Please install Python 3 and try again."
     exit 1
 fi
 
-if ! python3 -c "import gi" 2>/dev/null; then
+# Check if required dependencies are available
+if ! "$PYTHON_BIN" -c "import gi" 2>/dev/null; then
     echo "Error: PyGObject (GTK bindings for Python) is required but not found."
     echo "Please install python3-gi and try again."
     exit 1
 fi
 
 # Run the application
-exec "${HERE}/usr/bin/minecraft-server-manager" "$@"
+PYTHON_BIN="$PYTHON_BIN" exec "${HERE}/usr/bin/minecraft-server-manager" "$@"
 EOF
 chmod +x "$APPDIR/AppRun"
 

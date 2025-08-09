@@ -28,5 +28,12 @@ cd "${BASEDIR}" || {
     exit 1
 }
 
-# Execute the main Python script
-exec python3 "${BASEDIR}/main.py" "$@"
+# Execute the main Python script using system Python
+PYTHON_BIN="${PYTHON_BIN:-/usr/bin/python3}"
+
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
+    echo "Error: Python 3 interpreter not found at '$PYTHON_BIN'"
+    exit 1
+fi
+
+exec "$PYTHON_BIN" "${BASEDIR}/main.py" "$@"
