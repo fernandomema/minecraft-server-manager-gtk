@@ -1,0 +1,45 @@
+app-id: io.github.fernandomema.minecraft-server-manager-gtk
+runtime: org.gnome.Platform
+runtime-version: '47'
+sdk: org.gnome.Sdk
+command: minecraft-server-manager
+
+finish-args:
+  # X11 + XShm access
+  - --share=ipc
+  - --socket=x11
+  # Network access for downloading plugins/mods and server jars
+  - --share=network
+  # Filesystem access for server management
+  - --filesystem=home
+  # Allow spawning processes (for running servers)
+  - --talk-name=org.freedesktop.Flatpak
+
+modules:
+  - name: python3-pyyaml
+    buildsystem: simple
+    build-commands:
+      - pip3 install --verbose --exists-action=i --no-index --find-links="file://${PWD}"
+        --prefix=${FLATPAK_DEST} "PyYAML" --no-build-isolation
+    sources:
+      - type: file
+        url: https://files.pythonhosted.org/packages/54/ed/79a089b6be93607fa5cdaedf301d7dfb23af5f25c398d5ead2525b063e17/pyyaml-6.0.2.tar.gz
+        sha256: d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e
+
+  - name: minecraft-server-manager
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 minecraft-server-manager.sh ${FLATPAK_DEST}/bin/minecraft-server-manager
+      - install -Dm755 main.py ${FLATPAK_DEST}/bin/main.py
+      - cp -r controllers models utils views __init__.py ${FLATPAK_DEST}/bin/
+      - install -Dm644 io.github.fernandomema.minecraft-server-manager-gtk.desktop ${FLATPAK_DEST}/share/applications/io.github.fernandomema.minecraft-server-manager-gtk.desktop
+      - install -Dm644 io.github.fernandomema.minecraft-server-manager-gtk.svg ${FLATPAK_DEST}/share/icons/hicolor/scalable/apps/io.github.fernandomema.minecraft-server-manager-gtk.svg
+      - install -Dm644 io.github.fernandomema.minecraft-server-manager-gtk-128.png ${FLATPAK_DEST}/share/icons/hicolor/128x128/apps/io.github.fernandomema.minecraft-server-manager-gtk.png
+      - install -Dm644 io.github.fernandomema.minecraft-server-manager-gtk-64.png ${FLATPAK_DEST}/share/icons/hicolor/64x64/apps/io.github.fernandomema.minecraft-server-manager-gtk.png
+      - install -Dm644 io.github.fernandomema.minecraft-server-manager-gtk-48.png ${FLATPAK_DEST}/share/icons/hicolor/48x48/apps/io.github.fernandomema.minecraft-server-manager-gtk.png
+      - install -Dm644 io.github.fernandomema.minecraft-server-manager-gtk.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.fernandomema.minecraft-server-manager-gtk.metainfo.xml
+      - mkdir -p ${FLATPAK_DEST}/share/app-info/media
+      - cp screenshots/*.png ${FLATPAK_DEST}/share/app-info/media/
+    sources:
+      - type: dir
+        path: .

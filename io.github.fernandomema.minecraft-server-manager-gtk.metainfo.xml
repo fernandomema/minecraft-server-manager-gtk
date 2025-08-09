@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.fernandomema.MinecraftServerManager</id>
+  <id>io.github.fernandomema.minecraft-server-manager-gtk</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <name>Minecraft Server Manager</name>
   <summary>Manage Minecraft servers with ease</summary>
   <description>
     <p>
-      A GTK-based application for managing Minecraft servers. Features include:
+      Minecraft Server Manager is a comprehensive GTK-based application designed to simplify the management of Minecraft servers, providing an intuitive interface for server administration.
     </p>
     <ul>
       <li>Easy server creation and management</li>
@@ -32,11 +32,10 @@
       <caption>Configuration editor for server settings</caption>
     </screenshot>
   </screenshots>
-  <launchable type="desktop-id">io.github.fernandomema.MinecraftServerManager.desktop</launchable>
+  <launchable type="desktop-id">io.github.fernandomema.minecraft-server-manager-gtk.desktop</launchable>
   <url type="homepage">https://github.com/fernandomema/minecraft-server-manager-gtk</url>
   <url type="bugtracker">https://github.com/fernandomema/minecraft-server-manager-gtk/issues</url>
-  <developer_name>Fernando Merino</developer_name>
-  <developer id="fernandomema">
+  <developer id="io.github.fernandomema">
     <name>Fernando Merino</name>
   </developer>
   <categories>

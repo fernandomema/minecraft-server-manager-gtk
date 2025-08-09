@@ -1,10 +1,11 @@
 [Desktop Entry]
+Version=1.0
 Name=Minecraft Server Manager
 Comment=Manage Minecraft servers with ease
 Exec=minecraft-server-manager
-Icon=io.github.fernandomema.MinecraftServerManager
+Icon=io.github.fernandomema.minecraft-server-manager-gtk
 Terminal=false
 Type=Application
-Categories=Game;Utility;
+Categories=Game;
 Keywords=minecraft;server;management;bukkit;spigot;paper;plugins;mods;
 StartupNotify=true
