@@ -52,19 +52,27 @@ class ServerManagementPage:
         title_label.set_margin_bottom(12)
         server_page.pack_start(title_label, False, False, 0)
 
+        # Contenedor ajustable para configuración y consola
+        paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
+        paned.set_vexpand(True)
+
         # Sección de configuración del servidor
-        self._setup_server_configuration_section(server_page)
+        config_frame = self._setup_server_configuration_section()
+        paned.pack1(config_frame, resize=False, shrink=False)
 
         # Consola (sección principal)
-        console_widgets = self.console_manager.setup_console_view(server_page)
-        
+        console_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        console_widgets = self.console_manager.setup_console_view(console_container)
+        paned.pack2(console_container, resize=True, shrink=False)
+
+        server_page.pack_start(paned, True, True, 0)
+
         return server_page
 
-    def _setup_server_configuration_section(self, container):
+    def _setup_server_configuration_section(self):
         """Configura la sección de configuración del servidor"""
         # Frame para la configuración del servidor
         config_frame = Gtk.Frame(label=_("Server Configuration"))
-        container.pack_start(config_frame, False, False, 0)
         
         config_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         config_box.set_margin_left(12)
@@ -152,6 +160,8 @@ class ServerManagementPage:
         self.delete_server_button.get_style_context().add_class("destructive-action")
         self.delete_server_button.connect("clicked", self._on_delete_server_clicked)
         action_box.pack_start(self.delete_server_button, False, False, 0)
+
+        return config_frame
 
     # Event Handlers - Server Configuration
     def _on_server_name_changed(self, entry):
