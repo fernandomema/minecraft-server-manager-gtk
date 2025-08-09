@@ -1,6 +1,6 @@
 app-id: io.github.fernandomema.MinecraftServerManager
 runtime: org.gnome.Platform
-runtime-version: '48'
+runtime-version: '46'
 sdk: org.gnome.Sdk
 command: minecraft-server-manager
 
@@ -8,8 +8,6 @@ finish-args:
   # X11 + XShm access
   - --share=ipc
   - --socket=x11
-  # Wayland access
-  - --socket=wayland
   # Network access for downloading plugins/mods and server jars
   - --share=network
   # Filesystem access for server management
@@ -39,7 +37,8 @@ modules:
       - install -Dm644 io.github.fernandomema.MinecraftServerManager-64.png ${FLATPAK_DEST}/share/icons/hicolor/64x64/apps/io.github.fernandomema.MinecraftServerManager.png
       - install -Dm644 io.github.fernandomema.MinecraftServerManager-48.png ${FLATPAK_DEST}/share/icons/hicolor/48x48/apps/io.github.fernandomema.MinecraftServerManager.png
       - install -Dm644 io.github.fernandomema.MinecraftServerManager.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.fernandomema.MinecraftServerManager.metainfo.xml
+      - mkdir -p ${FLATPAK_DEST}/share/app-info/media
+      - cp screenshots/*.png ${FLATPAK_DEST}/share/app-info/media/
     sources:
-      - type: git
-        url: https://github.com/fernandomema/minecraft-server-manager-gtk.git
-        branch: main
+      - type: dir
+        path: .

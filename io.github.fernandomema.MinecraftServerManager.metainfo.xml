@@ -18,10 +18,27 @@
       <li>Download and install plugins/mods directly from Modrinth</li>
     </ul>
   </description>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/screenshots/server.png</image>
+      <caption>Server management interface</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/screenshots/plugins.png</image>
+      <caption>Plugin management with Modrinth integration</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/screenshots/configs.png</image>
+      <caption>Configuration editor for server settings</caption>
+    </screenshot>
+  </screenshots>
   <launchable type="desktop-id">io.github.fernandomema.MinecraftServerManager.desktop</launchable>
   <url type="homepage">https://github.com/fernandomema/minecraft-server-manager-gtk</url>
   <url type="bugtracker">https://github.com/fernandomema/minecraft-server-manager-gtk/issues</url>
   <developer_name>Fernando Merino</developer_name>
+  <developer id="fernandomema">
+    <name>Fernando Merino</name>
+  </developer>
   <categories>
     <category>Game</category>
     <category>Utility</category>
