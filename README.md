@@ -42,6 +42,15 @@ cd minecraft-server-manager-gtk
 python3 main.py
 ```
 
+### AppImage
+An AppImage can be built using the provided script (requires `linuxdeploy` and the python plugin):
+
+```bash
+./build-appimage.sh
+```
+
+The resulting `.AppImage` file will be created in the project directory.
+
 ## Dependencies
 
 - Python 3.6+

@@ -115,6 +115,10 @@ repo/
 builddir/
 *.flatpak
 
+# AppImage build files
+AppDir/
+*.AppImage
+
 # IDE files
 .vscode/
 .idea/
