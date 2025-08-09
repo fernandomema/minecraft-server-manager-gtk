@@ -17,6 +17,7 @@ class ConsoleManager:
         self.console_scrolled_window = None
         self.console_adjustment = None
         self.text_tags = {}
+        self.auto_scroll_enabled = True  # Auto-scroll siempre activo por defecto
         
     def setup_console_view(self, container):
         """Configura la vista de consola"""
@@ -284,7 +285,7 @@ class ConsoleManager:
                     end_iter, timestamp, self.text_tags['timestamp']
                 )
             
-            # Luego insertar el mensaje normal
+            # Luego insertar el mensaje normal (sin timestamp adicional)
             self.log_to_console(message)
         else:
             # Insertar mensaje sin timestamp
@@ -295,15 +296,6 @@ class ConsoleManager:
         if not self.console_buffer or not self.console_adjustment:
             return
             
-        # Verificar si estamos al final
-        at_bottom = False
-        if self.console_adjustment.get_upper() > 0:
-            current = self.console_adjustment.get_value()
-            page_size = self.console_adjustment.get_page_size()
-            upper = self.console_adjustment.get_upper()
-            if current + page_size >= upper:
-                at_bottom = True
-
         # Clasificar el mensaje y obtener el tag apropiado
         tag_name = self._classify_message(message)
         tag = self.text_tags.get(tag_name, self.text_tags['default'])
@@ -314,9 +306,83 @@ class ConsoleManager:
         # Insertar texto con el tag correspondiente
         self.console_buffer.insert_with_tags(end_iter, message, tag)
 
-        # Auto-scroll si estábamos al final
-        if at_bottom:
-            self.console_adjustment.set_value(self.console_adjustment.get_upper())
+        # Auto-scroll basado en la configuración
+        if self.auto_scroll_enabled:
+            self._scroll_to_bottom()
+        else:
+            # Auto-scroll inteligente: solo si el usuario está al final
+            if self.is_at_bottom():
+                self._scroll_to_bottom()
+
+    def _scroll_to_bottom(self):
+        """Hace scroll al final de la consola"""
+        if not self.console_adjustment:
+            return
+            
+        # Usar GLib.idle_add para asegurar que el scroll se haga después de que el texto se haya renderizado
+        from gi.repository import GLib
+        GLib.idle_add(self._do_scroll_to_bottom)
+    
+    def _do_scroll_to_bottom(self):
+        """Ejecuta el scroll al final en el hilo principal"""
+        if self.console_adjustment:
+            # Obtener el máximo valor de scroll
+            upper = self.console_adjustment.get_upper()
+            page_size = self.console_adjustment.get_page_size()
+            # Hacer scroll al final
+            self.console_adjustment.set_value(max(0, upper - page_size))
+        return False  # No repetir la operación
+
+    def scroll_to_bottom(self):
+        """Método público para hacer scroll al final de la consola"""
+        self._scroll_to_bottom()
+
+    def is_at_bottom(self):
+        """Verifica si el scroll está en la parte inferior"""
+        if not self.console_adjustment:
+            return True
+            
+        current = self.console_adjustment.get_value()
+        page_size = self.console_adjustment.get_page_size()
+        upper = self.console_adjustment.get_upper()
+        
+        # Considerar que estamos "al final" si estamos dentro de los últimos 10 pixels
+        return current + page_size >= upper - 10
+
+    def log_to_console_smart_scroll(self, message: str):
+        """Añade un mensaje con auto-scroll inteligente (solo si el usuario está al final)"""
+        if not self.console_buffer or not self.console_adjustment:
+            return
+            
+        # Verificar si estamos al final antes de añadir el mensaje
+        was_at_bottom = self.is_at_bottom()
+        
+        # Clasificar el mensaje y obtener el tag apropiado
+        tag_name = self._classify_message(message)
+        tag = self.text_tags.get(tag_name, self.text_tags['default'])
+
+        # Obtener la posición final del buffer
+        end_iter = self.console_buffer.get_end_iter()
+        
+        # Insertar texto con el tag correspondiente
+        self.console_buffer.insert_with_tags(end_iter, message, tag)
+
+        # Solo hacer auto-scroll si estábamos al final
+        if was_at_bottom:
+            self._scroll_to_bottom()
+
+    def set_auto_scroll(self, enabled: bool):
+        """Habilita o deshabilita el auto-scroll automático"""
+        self.auto_scroll_enabled = enabled
+
+    def toggle_auto_scroll(self):
+        """Alterna el estado del auto-scroll"""
+        self.auto_scroll_enabled = not self.auto_scroll_enabled
+        return self.auto_scroll_enabled
+
+    def get_auto_scroll_status(self):
+        """Obtiene el estado actual del auto-scroll"""
+        return self.auto_scroll_enabled
 
     def clear_console(self):
         """Limpia el contenido de la consola"""
