@@ -208,10 +208,14 @@ class PluginManagementPage:
         vbox.pack_start(hbox, False, False, 0)
 
         add_button = Gtk.Button(label=_("Add Local Plugin"))
+        add_button.set_image(Gtk.Image.new_from_icon_name("list-add-symbolic", Gtk.IconSize.BUTTON))
+        add_button.set_always_show_image(True)
         add_button.connect("clicked", self._on_add_local_plugin_clicked)
         hbox.pack_start(add_button, False, False, 0)
 
         remove_button = Gtk.Button(label=_("Remove Selected"))
+        remove_button.set_image(Gtk.Image.new_from_icon_name("edit-delete-symbolic", Gtk.IconSize.BUTTON))
+        remove_button.set_always_show_image(True)
         remove_button.connect("clicked", self._on_remove_local_plugin_clicked)
         hbox.pack_start(remove_button, False, False, 0)
         
