@@ -168,8 +168,10 @@ class PluginManagementPage:
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         frame.add(vbox)
 
-        # Lista de plugins locales con iconos y método de instalación
-        self.local_plugin_store = Gtk.ListStore(str, str, str, str, str)  # type, icon_name, name, install_method, path
+        # Lista de plugins locales con iconos, versión y método de instalación
+        self.local_plugin_store = Gtk.ListStore(
+            str, str, str, str, str, str
+        )  # type, icon_name, name, version, install_method, path
         self.local_plugin_view = Gtk.TreeView(model=self.local_plugin_store)
         
         # Columna de icono
@@ -190,10 +192,16 @@ class PluginManagementPage:
         name_column = Gtk.TreeViewColumn(_("Plugin/Mod Name"), name_renderer, text=2)
         name_column.set_expand(True)
         self.local_plugin_view.append_column(name_column)
-        
+
+        # Columna de versión
+        version_renderer = Gtk.CellRendererText()
+        version_column = Gtk.TreeViewColumn(_("Version"), version_renderer, text=3)
+        version_column.set_fixed_width(100)
+        self.local_plugin_view.append_column(version_column)
+
         # Columna de método de instalación
         method_renderer = Gtk.CellRendererText()
-        method_column = Gtk.TreeViewColumn(_("Install Method"), method_renderer, text=3)
+        method_column = Gtk.TreeViewColumn(_("Install Method"), method_renderer, text=4)
         method_column.set_fixed_width(120)
         self.local_plugin_view.append_column(method_column)
 
@@ -350,9 +358,9 @@ class PluginManagementPage:
             return
 
         plugin_type = model[treeiter][0]  # Tipo (plugin/mod)
-        plugin_name = model[treeiter][2]  # Nombre (ahora en índice 2)
-        install_method = model[treeiter][3]  # Método de instalación (ahora en índice 3)
-        plugin_path = model[treeiter][4]  # Ruta (ahora en índice 4)
+        plugin_name = model[treeiter][2]  # Nombre (índice 2)
+        install_method = model[treeiter][4]  # Método de instalación (índice 4)
+        plugin_path = model[treeiter][5]  # Ruta (índice 5)
         
         plugin = Plugin(plugin_name, "Local", file_path=plugin_path, install_method=install_method)
         if self.plugin_controller.remove_local_plugin(plugin, self.selected_server.path):
@@ -466,8 +474,8 @@ class PluginManagementPage:
 
         plugin_type = model[treeiter][0]
         plugin_name = model[treeiter][2]  # Nombre ahora en índice 2
-        install_method = model[treeiter][3]  # Método ahora en índice 3
-        plugin_path = model[treeiter][4]  # Ruta ahora en índice 4
+        install_method = model[treeiter][4]  # Método ahora en índice 4
+        plugin_path = model[treeiter][5]  # Ruta ahora en índice 5
         
         if install_method == "Manual":
             dialog = Gtk.MessageDialog(
@@ -609,8 +617,9 @@ class PluginManagementPage:
                     plugin_type,        # Tipo (índice 0)
                     plugin_type,        # icon_name (índice 1, no se usa directamente)
                     plugin.name,        # Nombre (índice 2)
-                    display_method,     # Método de instalación (índice 3)
-                    plugin.file_path or ""  # Ruta (índice 4)
+                    plugin.version,     # Versión (índice 3)
+                    display_method,     # Método de instalación (índice 4)
+                    plugin.file_path or ""  # Ruta (índice 5)
                 ])
 
     def _on_search_results(self, plugins):

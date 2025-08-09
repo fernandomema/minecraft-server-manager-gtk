@@ -7,6 +7,8 @@ import urllib.parse
 import threading
 import os
 import socket
+import zipfile
+import re
 from typing import List, Dict, Optional, Callable
 from gi.repository import GLib
 
@@ -98,6 +100,43 @@ class PluginController:
         if plugin_name in metadata:
             del metadata[plugin_name]
             self._save_plugin_metadata(server_path, metadata)
+
+    def _extract_version_from_jar(self, file_path: str) -> str:
+        """Obtiene la versión desde los metadatos del JAR.
+
+        Soporta formatos de plugins de Bukkit/Spigot (plugin.yml), mods de
+        Fabric/Quilt (fabric.mod.json/quilt.mod.json) y mods de Forge
+        (mods.toml). Si no se puede determinar la versión se devuelve
+        "Unknown".
+        """
+        try:
+            with zipfile.ZipFile(file_path, "r") as jar:
+                if "plugin.yml" in jar.namelist():
+                    data = jar.read("plugin.yml").decode("utf-8", errors="ignore")
+                    match = re.search(r"^version:\s*(.+)$", data, re.MULTILINE)
+                    if match:
+                        return match.group(1).strip()
+
+                for json_file in ["fabric.mod.json", "quilt.mod.json"]:
+                    if json_file in jar.namelist():
+                        try:
+                            meta = json.loads(jar.read(json_file).decode("utf-8"))
+                            version = meta.get("version")
+                            if version:
+                                return str(version)
+                        except Exception:
+                            pass
+
+                for toml_file in ["mods.toml", "META-INF/mods.toml"]:
+                    if toml_file in jar.namelist():
+                        text = jar.read(toml_file).decode("utf-8", errors="ignore")
+                        match = re.search(r'version\s*=\s*"([^"]+)"', text)
+                        if match:
+                            return match.group(1).strip()
+        except Exception as e:
+            GLib.idle_add(self._log, f"Error extracting version from {os.path.basename(file_path)}: {e}\n")
+
+        return "Unknown"
     
     def get_local_plugins(self, server_path: str) -> List[Plugin]:
         """Obtiene la lista de plugins locales de un servidor"""
@@ -108,14 +147,15 @@ class PluginController:
         for filename, full_path in items:
             plugin_name = filename.replace('.jar', '')
             plugin_metadata = metadata.get(plugin_name, {})
-            
+
             install_method = plugin_metadata.get("install_method", "Manual")
             project_id = plugin_metadata.get("project_id")
-            
+            version = self._extract_version_from_jar(full_path)
+
             plugin = Plugin(
                 name=plugin_name,
                 source="Local",
-                version="Unknown",
+                version=version,
                 file_path=full_path,
                 install_method=install_method
             )
