@@ -43,13 +43,25 @@ python3 main.py
 ```
 
 ### AppImage
-An AppImage can be built using the provided script (requires `linuxdeploy` and the python plugin):
+Build a portable AppImage (self-extracting executable):
 
 ```bash
+# Build the AppImage
 ./build-appimage.sh
 ```
 
-The resulting `.AppImage` file will be created in the project directory.
+The script creates a self-extracting portable executable that:
+1. Contains all application files
+2. Checks for required system dependencies
+3. Runs without installation on most Linux distributions
+
+**System Requirements for AppImage:**
+- Python 3
+- PyGObject (python3-gi)
+- GTK 3
+- PyYAML (python3-yaml)
+
+The resulting `minecraft-server-manager-gtk-x86_64.AppImage` can be distributed and run directly.
 
 ## Dependencies
 
