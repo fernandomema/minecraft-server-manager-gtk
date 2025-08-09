@@ -145,7 +145,6 @@ logs/
 temp/
 tmp/
 
-
-# AppImage
-AppDir/
-*.AppImage
+# GitHub Actions artifacts
+*.tar
+*.zip

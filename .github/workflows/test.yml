@@ -1,0 +1,35 @@
+name: Build and Test
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-gi python3-yaml gir1.2-gtk-3.0
+
+    - name: Test AppImage build
+      run: |
+        chmod +x build-appimage.sh
+        ./build-appimage.sh
+
+    - name: Verify AppImage
+      run: |
+        ls -la minecraft-server-manager-gtk-x86_64.AppImage
+        file minecraft-server-manager-gtk-x86_64.AppImage
+
+    - name: Upload AppImage for testing
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-appimage
+        path: minecraft-server-manager-gtk-x86_64.AppImage
+        retention-days: 7
