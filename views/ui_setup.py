@@ -41,6 +41,10 @@ class UISetup:
         .sidebar listbox row:selected:hover {
             background-color: #4a90d9;
         }
+
+        .content {
+            background-color: @theme_base_color;
+        }
         
         .destructive-action {
             background-color: #e74c3c;
@@ -175,7 +179,8 @@ class UISetup:
         content_stack = Gtk.Stack()
         content_stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
         content_stack.set_transition_duration(200)
-        
+        content_stack.get_style_context().add_class("content")
+
         main_paned.pack2(content_stack, True, False)
-        
+
         return content_stack
