@@ -40,5 +40,6 @@ modules:
       - install -Dm644 io.github.fernandomema.MinecraftServerManager-48.png ${FLATPAK_DEST}/share/icons/hicolor/48x48/apps/io.github.fernandomema.MinecraftServerManager.png
       - install -Dm644 io.github.fernandomema.MinecraftServerManager.metainfo.xml ${FLATPAK_DEST}/share/metainfo/io.github.fernandomema.MinecraftServerManager.metainfo.xml
     sources:
-      - type: dir
-        path: .
+      - type: git
+        url: https://github.com/fernandomema/minecraft-server-manager-gtk.git
+        branch: main
