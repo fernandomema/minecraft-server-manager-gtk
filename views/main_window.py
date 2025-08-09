@@ -2,6 +2,7 @@
 Ventana principal de la aplicación Minecraft Server Manager
 """
 import gi
+import os
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib
 
@@ -75,6 +76,24 @@ class MinecraftServerManager(Gtk.Window):
         
         .sidebar listbox row:selected:hover {
             background-color: #4a90d9;
+        }
+        
+        .destructive-action {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .destructive-action:hover {
+            background-color: #c0392b;
+        }
+
+        .warning-action {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .warning-action:hover {
+            background-color: #d68910;
         }
         """
         
@@ -229,12 +248,8 @@ class MinecraftServerManager(Gtk.Window):
         title_label.set_margin_bottom(12)
         server_page.pack_start(title_label, False, False, 0)
 
-        # Sección superior: Solo botones de acción
-        hbox_top = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        server_page.pack_start(hbox_top, False, False, 0)
-
-        # Botones de acción (centrados)
-        self._setup_server_buttons(hbox_top)
+        # Sección de configuración del servidor
+        self._setup_server_configuration_section(server_page)
 
         # Consola (sección principal)
         self._setup_console_view(server_page)
@@ -268,20 +283,98 @@ class MinecraftServerManager(Gtk.Window):
         
         self.content_stack.add_named(plugin_page, "plugin_manager")
 
-    def _setup_server_buttons(self, container):
-        """Configura los botones de acción de servidor"""
-        # Centrar los botones horizontalmente
-        button_hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-        button_hbox.set_halign(Gtk.Align.CENTER)
-        container.pack_start(button_hbox, True, False, 0)
-
-        self.add_server_button = Gtk.Button(label="Add Server")
-        self.add_server_button.connect("clicked", self._on_add_server_clicked)
-        button_hbox.pack_start(self.add_server_button, False, False, 0)
-
-        self.download_server_button = Gtk.Button(label="Download Server Type")
-        self.download_server_button.connect("clicked", self._on_download_server_clicked)
-        button_hbox.pack_start(self.download_server_button, False, False, 0)
+    def _setup_server_configuration_section(self, container):
+        """Configura la sección de configuración del servidor"""
+        # Frame para la configuración del servidor
+        config_frame = Gtk.Frame(label="Server Configuration")
+        container.pack_start(config_frame, False, False, 0)
+        
+        config_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        config_box.set_margin_left(12)
+        config_box.set_margin_right(12)
+        config_box.set_margin_top(12)
+        config_box.set_margin_bottom(12)
+        config_frame.add(config_box)
+        
+        # Información del servidor seleccionado
+        self.server_info_label = Gtk.Label()
+        self.server_info_label.set_markup("<i>Select a server from the title bar to configure</i>")
+        self.server_info_label.set_halign(Gtk.Align.START)
+        config_box.pack_start(self.server_info_label, False, False, 0)
+        
+        # Grid para los campos de configuración
+        config_grid = Gtk.Grid()
+        config_grid.set_column_spacing(12)
+        config_grid.set_row_spacing(8)
+        config_box.pack_start(config_grid, False, False, 0)
+        
+        # Server Name
+        name_label = Gtk.Label(label="Server Name:")
+        name_label.set_halign(Gtk.Align.END)
+        self.server_name_entry = Gtk.Entry()
+        self.server_name_entry.set_sensitive(False)
+        self.server_name_entry.connect("changed", self._on_server_name_changed)
+        
+        config_grid.attach(name_label, 0, 0, 1, 1)
+        config_grid.attach(self.server_name_entry, 1, 0, 2, 1)
+        
+        # Server Path
+        path_label = Gtk.Label(label="Server Path:")
+        path_label.set_halign(Gtk.Align.END)
+        self.server_path_entry = Gtk.Entry()
+        self.server_path_entry.set_sensitive(False)
+        self.server_path_entry.set_editable(False)  # Solo lectura
+        
+        config_grid.attach(path_label, 0, 1, 1, 1)
+        config_grid.attach(self.server_path_entry, 1, 1, 2, 1)
+        
+        # JAR File
+        jar_label = Gtk.Label(label="JAR File:")
+        jar_label.set_halign(Gtk.Align.END)
+        self.server_jar_combo = Gtk.ComboBoxText()
+        self.server_jar_combo.set_sensitive(False)
+        self.server_jar_combo.connect("changed", self._on_server_jar_changed)
+        
+        config_grid.attach(jar_label, 0, 2, 1, 1)
+        config_grid.attach(self.server_jar_combo, 1, 2, 1, 1)
+        
+        # Botón para descargar JAR
+        self.download_jar_button = Gtk.Button(label="Download JAR")
+        self.download_jar_button.set_sensitive(False)
+        self.download_jar_button.connect("clicked", self._on_download_jar_clicked)
+        config_grid.attach(self.download_jar_button, 2, 2, 1, 1)
+        
+        # Botones de acción
+        action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        action_box.set_halign(Gtk.Align.CENTER)
+        config_box.pack_start(action_box, False, False, 12)
+        
+        self.save_config_button = Gtk.Button(label="Save Configuration")
+        self.save_config_button.set_sensitive(False)
+        self.save_config_button.connect("clicked", self._on_save_config_clicked)
+        action_box.pack_start(self.save_config_button, False, False, 0)
+        
+        self.refresh_jars_button = Gtk.Button(label="Refresh JARs")
+        self.refresh_jars_button.set_sensitive(False)
+        self.refresh_jars_button.connect("clicked", self._on_refresh_jars_clicked)
+        action_box.pack_start(self.refresh_jars_button, False, False, 0)
+        
+        # Separador
+        separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
+        action_box.pack_start(separator, False, False, 6)
+        
+        # Botones de gestión del servidor
+        self.unlink_server_button = Gtk.Button(label="Unlink Server")
+        self.unlink_server_button.set_sensitive(False)
+        self.unlink_server_button.get_style_context().add_class("warning-action")
+        self.unlink_server_button.connect("clicked", self._on_unlink_server_clicked)
+        action_box.pack_start(self.unlink_server_button, False, False, 0)
+        
+        self.delete_server_button = Gtk.Button(label="Delete Server")
+        self.delete_server_button.set_sensitive(False)
+        self.delete_server_button.get_style_context().add_class("destructive-action")
+        self.delete_server_button.connect("clicked", self._on_delete_server_clicked)
+        action_box.pack_start(self.delete_server_button, False, False, 0)
 
     def _setup_console_view(self, container):
         """Configura la vista de consola"""
@@ -388,6 +481,159 @@ class MinecraftServerManager(Gtk.Window):
         self._log_to_console("Welcome to the Minecraft Server Manager console!\n")
         self._log_to_console("Server output will appear here.\n")
 
+    # Event Handlers - Server Configuration
+    def _on_server_name_changed(self, entry):
+        """Maneja cambios en el nombre del servidor"""
+        if self.selected_server and entry.get_text():
+            self.save_config_button.set_sensitive(True)
+
+    def _on_server_jar_changed(self, combo):
+        """Maneja cambios en la selección del JAR"""
+        if self.selected_server:
+            self.save_config_button.set_sensitive(True)
+
+    def _on_download_jar_clicked(self, widget):
+        """Maneja el clic en descargar JAR"""
+        if not self.selected_server:
+            self._log_to_console("Please select a server first.\n")
+            return
+
+        dialog = DownloadServerDialog(self)
+        response = dialog.run()
+
+        if response == Gtk.ResponseType.OK:
+            details = dialog.get_download_details()
+            if details["type"] == "Paper" and details["version"]:
+                self._start_download(details["version"])
+
+        dialog.destroy()
+
+    def _on_save_config_clicked(self, widget):
+        """Maneja el clic en guardar configuración"""
+        if not self.selected_server:
+            return
+
+        # Actualizar nombre del servidor
+        new_name = self.server_name_entry.get_text()
+        if new_name and new_name != self.selected_server.name:
+            old_name = self.selected_server.name
+            self.selected_server.name = new_name
+            
+            # Actualizar en el header selector
+            self._refresh_server_list()
+            self._select_server_by_name(new_name)
+            
+            self._log_to_console(f"Server name changed from '{old_name}' to '{new_name}'\n")
+
+        # Actualizar JAR seleccionado
+        selected_jar = self.server_jar_combo.get_active_text()
+        if selected_jar and selected_jar != self.selected_server.jar:
+            old_jar = self.selected_server.jar
+            self.server_controller.update_server_jar(self.selected_server, selected_jar)
+            self._log_to_console(f"Server JAR changed from '{old_jar}' to '{selected_jar}'\n")
+
+        # Guardar cambios
+        if self.server_controller.save_servers():
+            self._log_to_console("Server configuration saved successfully.\n")
+            self.save_config_button.set_sensitive(False)
+            self._update_header_buttons()
+        else:
+            self._log_to_console("Error saving server configuration.\n")
+
+    def _on_refresh_jars_clicked(self, widget):
+        """Maneja el clic en refrescar JARs"""
+        if self.selected_server:
+            self._update_jar_list()
+            self._log_to_console("JAR list refreshed.\n")
+
+    def _on_unlink_server_clicked(self, widget):
+        """Maneja el clic en desvincular servidor"""
+        if not self.selected_server:
+            return
+
+        # Diálogo de confirmación
+        dialog = Gtk.MessageDialog(
+            parent=self,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.WARNING,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=f"Unlink Server '{self.selected_server.name}'?"
+        )
+        dialog.format_secondary_text(
+            "This will remove the server from the manager but will NOT delete "
+            "the server files from your disk. The server data will remain intact."
+        )
+
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            server_name = self.selected_server.name
+            self._unlink_server(self.selected_server)
+            self._log_to_console(f"Server '{server_name}' has been unlinked from the manager.\n")
+
+    def _on_delete_server_clicked(self, widget):
+        """Maneja el clic en eliminar servidor"""
+        if not self.selected_server:
+            return
+
+        # Diálogo de confirmación más estricto
+        dialog = Gtk.MessageDialog(
+            parent=self,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.ERROR,
+            buttons=Gtk.ButtonsType.YES_NO,
+            text=f"DELETE Server '{self.selected_server.name}'?"
+        )
+        dialog.format_secondary_text(
+            "⚠️  WARNING: This will PERMANENTLY DELETE all server files from your disk!\n\n"
+            f"Server path: {self.selected_server.path}\n\n"
+            "This action CANNOT be undone. All worlds, configurations, and plugins will be lost.\n\n"
+            "Are you absolutely sure you want to continue?"
+        )
+
+        # Hacer el botón YES más prominente para la advertencia
+        dialog.set_default_response(Gtk.ResponseType.NO)
+
+        response = dialog.run()
+        dialog.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            # Segundo diálogo de confirmación
+            confirm_dialog = Gtk.MessageDialog(
+                parent=self,
+                flags=Gtk.DialogFlags.MODAL,
+                message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.YES_NO,
+                text="Final Confirmation"
+            )
+            confirm_dialog.format_secondary_text(
+                f"Type the server name '{self.selected_server.name}' to confirm deletion:"
+            )
+            
+            # Añadir campo de entrada para confirmación
+            content_area = confirm_dialog.get_content_area()
+            entry = Gtk.Entry()
+            entry.set_placeholder_text("Enter server name to confirm")
+            content_area.pack_start(entry, False, False, 0)
+            content_area.show_all()
+
+            final_response = confirm_dialog.run()
+            entered_name = entry.get_text()
+            confirm_dialog.destroy()
+
+            if (final_response == Gtk.ResponseType.YES and 
+                entered_name == self.selected_server.name):
+                server_name = self.selected_server.name
+                server_path = self.selected_server.path
+                
+                if self._delete_server(self.selected_server):
+                    self._log_to_console(f"Server '{server_name}' and all its files have been permanently deleted from '{server_path}'.\n")
+                else:
+                    self._log_to_console(f"Error: Could not delete server '{server_name}'. Check permissions and try again.\n")
+            else:
+                self._log_to_console("Server deletion cancelled - name confirmation failed.\n")
+
     # Event Handlers - Server Management
     def _on_header_server_selected(self, combobox):
         """Maneja la selección de servidor en el header"""
@@ -396,7 +642,7 @@ class MinecraftServerManager(Gtk.Window):
             return
 
         if selected_name == "-- Add New Server --":
-            self._on_add_server_clicked(None)
+            self._show_add_server_dialog()
             # Resetear a servidor anterior si existe
             if self.selected_server:
                 self._update_header_selector(self.selected_server.name)
@@ -415,8 +661,8 @@ class MinecraftServerManager(Gtk.Window):
         # La selección ahora se maneja completamente a través del header selector
         pass
 
-    def _on_add_server_clicked(self, widget):
-        """Maneja el clic en añadir servidor"""
+    def _show_add_server_dialog(self):
+        """Muestra el diálogo para añadir un nuevo servidor"""
         dialog = AddServerDialog(self)
         response = dialog.run()
 
@@ -454,22 +700,6 @@ class MinecraftServerManager(Gtk.Window):
         """Maneja el clic en matar servidor"""
         if self.selected_server:
             self.server_controller.kill_server(self.selected_server)
-
-    def _on_download_server_clicked(self, widget):
-        """Maneja el clic en descargar servidor"""
-        if not self.selected_server:
-            self._log_to_console("Please select a server to download a JAR for.\n")
-            return
-
-        dialog = DownloadServerDialog(self)
-        response = dialog.run()
-
-        if response == Gtk.ResponseType.OK:
-            details = dialog.get_download_details()
-            if details["type"] == "Paper" and details["version"]:
-                self._start_download(details["version"])
-
-        dialog.destroy()
 
     # Event Handlers - Plugin Management
     def _on_add_local_plugin_clicked(self, widget):
@@ -536,13 +766,123 @@ class MinecraftServerManager(Gtk.Window):
         """Maneja el clic en actualizar plugin online"""
         self._log_to_console("Update Online Plugin functionality not yet implemented.\n")
 
+    def _unlink_server(self, server: MinecraftServer) -> bool:
+        """Desvincula un servidor de la gestión (no elimina archivos)"""
+        try:
+            # Usar el método del controlador
+            success = self.server_controller.remove_server(server)
+            
+            if success:
+                # Actualizar interfaz
+                self._refresh_server_list()
+                
+                # Limpiar selección actual
+                self.selected_server = None
+                self._update_header_buttons()
+                self._clear_server_configuration()
+                self._update_plugin_info(None)
+            
+            return success
+            
+        except Exception as e:
+            self._log_to_console(f"Error unlinking server: {e}\n")
+            return False
+
+    def _delete_server(self, server: MinecraftServer) -> bool:
+        """Elimina completamente un servidor y todos sus archivos"""
+        try:
+            import shutil
+            
+            # Detener el servidor si está ejecutándose
+            if self.server_controller.is_server_running(server):
+                self.server_controller.kill_server(server)
+                # Esperar un momento para que el proceso termine
+                import time
+                time.sleep(1)
+            
+            # Eliminar directorio del servidor
+            if os.path.exists(server.path):
+                shutil.rmtree(server.path)
+                self._log_to_console(f"Deleted server directory: {server.path}\n")
+            
+            # Usar el método del controlador para eliminar de la lista
+            success = self.server_controller.remove_server(server)
+            
+            if success:
+                # Actualizar interfaz
+                self._refresh_server_list()
+                
+                # Limpiar selección actual
+                self.selected_server = None
+                self._update_header_buttons()
+                self._clear_server_configuration()
+                self._update_plugin_info(None)
+            
+            return success
+            
+        except Exception as e:
+            self._log_to_console(f"Error deleting server: {e}\n")
+            return False
+
     # Utility Methods
     def _select_server(self, server: MinecraftServer):
         """Selecciona un servidor"""
         self.selected_server = server
         self._update_header_buttons()
         self._update_plugin_info(server)
+        self._update_server_configuration(server)
         self.plugin_controller.refresh_local_plugins(server.path)
+
+    def _update_server_configuration(self, server: MinecraftServer):
+        """Actualiza los campos de configuración del servidor"""
+        if not hasattr(self, 'server_name_entry'):
+            return  # Los widgets aún no están creados
+            
+        # Actualizar información del servidor
+        self.server_info_label.set_markup(f"<b>Configuring:</b> {server.name}")
+        
+        # Actualizar campos
+        self.server_name_entry.set_text(server.name)
+        self.server_path_entry.set_text(server.path)
+        
+        # Actualizar lista de JARs
+        self._update_jar_list()
+        
+        # Habilitar controles
+        self.server_name_entry.set_sensitive(True)
+        self.server_jar_combo.set_sensitive(True)
+        self.download_jar_button.set_sensitive(True)
+        self.save_config_button.set_sensitive(False)  # Solo si hay cambios
+        self.refresh_jars_button.set_sensitive(True)
+        self.unlink_server_button.set_sensitive(True)
+        self.delete_server_button.set_sensitive(True)
+
+    def _update_jar_list(self):
+        """Actualiza la lista de JARs disponibles"""
+        if not self.selected_server or not hasattr(self, 'server_jar_combo'):
+            return
+            
+        self.server_jar_combo.remove_all()
+        self.server_jar_combo.append_text("DOWNLOAD_LATER")
+        
+        # Buscar archivos JAR en el directorio del servidor
+        from utils.file_utils import get_jar_files_in_directory
+        jar_files = get_jar_files_in_directory(self.selected_server.path)
+        
+        for jar_file in jar_files:
+            self.server_jar_combo.append_text(jar_file)
+        
+        # Seleccionar el JAR actual
+        current_jar = self.selected_server.jar
+        for i in range(self.server_jar_combo.get_model().iter_n_children(None)):
+            if self.server_jar_combo.get_model().get_value(
+                self.server_jar_combo.get_model().get_iter_from_string(str(i)), 0
+            ) == current_jar:
+                self.server_jar_combo.set_active(i)
+                break
+        else:
+            # Si no se encuentra, seleccionar "DOWNLOAD_LATER"
+            self.server_jar_combo.set_active(0)
 
     def _select_server_by_name(self, name: str):
         """Selecciona un servidor por nombre en el header selector"""
@@ -584,6 +924,27 @@ class MinecraftServerManager(Gtk.Window):
             self.plugin_server_label.set_text(f"Managing plugins for: {server.name}")
         else:
             self.plugin_server_label.set_text("Select a server to manage plugins.")
+            # También limpiar configuración del servidor
+            self._clear_server_configuration()
+
+    def _clear_server_configuration(self):
+        """Limpia los campos de configuración cuando no hay servidor seleccionado"""
+        if not hasattr(self, 'server_name_entry'):
+            return
+            
+        self.server_info_label.set_markup("<i>Select a server from the title bar to configure</i>")
+        self.server_name_entry.set_text("")
+        self.server_path_entry.set_text("")
+        self.server_jar_combo.remove_all()
+        
+        # Deshabilitar controles
+        self.server_name_entry.set_sensitive(False)
+        self.server_jar_combo.set_sensitive(False)
+        self.download_jar_button.set_sensitive(False)
+        self.save_config_button.set_sensitive(False)
+        self.refresh_jars_button.set_sensitive(False)
+        self.unlink_server_button.set_sensitive(False)
+        self.delete_server_button.set_sensitive(False)
 
     def _refresh_server_list(self):
         """Refresca el selector de servidores del header"""
