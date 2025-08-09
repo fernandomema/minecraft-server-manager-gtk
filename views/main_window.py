@@ -56,7 +56,7 @@ class MinecraftServerManager(Gtk.Window):
             self, self.server_controller, self.download_controller, self.console_manager
         )
         self.plugin_management_page = PluginManagementPage(
-            self, self.plugin_controller, self.console_manager
+            self, self.console_manager, self.plugin_controller
         )
         self.config_editor_page = ConfigEditorPage(
             self, self.server_controller, self.console_manager

@@ -101,17 +101,22 @@ class PluginController:
         if self.plugins_updated_callback:
             self.plugins_updated_callback(plugins)
     
-    def search_modrinth_plugins(self, query: str, callback: Callable[[List[Plugin]], None]):
-        """Busca plugins en Modrinth de forma asíncrona"""
+    def search_modrinth_plugins(self, query: str, callback: Callable[[List[Plugin]], None], search_type: str = ""):
+        """Busca plugins en Modrinth de forma asíncrona
+        
+        Args:
+            query: Término de búsqueda
+            callback: Función callback para los resultados
+            search_type: Tipo de búsqueda ("plugin", "mod", o "" para ambos)
+        """
         def perform_search():
             try:
-                self._log(f"DEBUG: Starting Modrinth search thread for '{query}'.\n")
+                print(f"DEBUG: Starting Modrinth search for '{query}' (type: {search_type or 'both'})")
                 
                 encoded_query = urllib.parse.quote(query)
-                # Usar una versión simplificada de la API primero para probar
                 url = f"{MODRINTH_API_BASE_URL}/search?query={encoded_query}"
                 
-                self._log(f"DEBUG: Modrinth API URL: {url}\n")
+                print(f"DEBUG: Modrinth API URL: {url}")
                 
                 request = urllib.request.Request(url)
                 request.add_header('User-Agent', 'MinecraftServerManager/1.0')
@@ -119,19 +124,63 @@ class PluginController:
                 with urllib.request.urlopen(request) as response:
                     data = json.loads(response.read().decode())
                 
-                self._log(f"DEBUG: Received response from Modrinth API.\n")
+                print(f"DEBUG: Received response from Modrinth API")
                 
                 plugins = []
                 if data and "hits" in data:
-                    self._log(f"DEBUG: Processing {len(data['hits'])} hits from API.\n")
+                    total_hits = len(data['hits'])
+                    print(f"DEBUG: Processing {total_hits} hits from API")
+                    filtered_count = 0
+                    
                     for hit in data["hits"]:
-                        # Filtrar solo plugins y mods
+                        # Debug: Mostrar el tipo de proyecto y categorías
                         project_type = hit.get("project_type", "").lower()
-                        if project_type not in ["mod", "plugin"]:
+                        categories = hit.get("categories", [])
+                        title = hit.get('title', 'Unknown')
+                        
+                        print(f"DEBUG: '{title}' - Type: '{project_type}', Categories: {categories}")
+                        
+                        # Determinar si es un plugin de servidor o mod
+                        server_categories = ["bukkit", "spigot", "paper", "purpur", "folia", "server", "management", "administration", "utility"]
+                        
+                        # Clasificación simplificada
+                        is_plugin_type = project_type == "plugin"
+                        has_server_categories = any(cat in server_categories for cat in categories)
+                        is_mod_type = project_type == "mod"
+                        is_modpack = project_type == "modpack"
+                        
+                        print(f"DEBUG: '{title}' - Type: {project_type}, Has server cats: {has_server_categories}")
+                        
+                        # Aplicar filtros basados en el tipo de búsqueda
+                        should_include = False
+                        final_type = "mod"  # default
+                        
+                        if search_type == "plugin":
+                            # Para búsqueda de plugins: incluir plugins reales o mods con categorías de servidor
+                            if is_plugin_type or (is_mod_type and has_server_categories):
+                                should_include = True
+                                final_type = "plugin"
+                        elif search_type == "mod":
+                            # Para búsqueda de mods: incluir mods que no sean específicamente de servidor
+                            if is_mod_type and not has_server_categories:
+                                should_include = True
+                                final_type = "mod"
+                        else:
+                            # Sin filtro: incluir todo excepto modpacks
+                            if not is_modpack:
+                                should_include = True
+                                final_type = "plugin" if (is_plugin_type or has_server_categories) else "mod"
+                        
+                        if not should_include:
+                            print(f"DEBUG: Skipping '{title}' - doesn't match search criteria")
                             continue
+                            
+                        print(f"DEBUG: Including '{title}' in results")
+                        filtered_count += 1
                             
                         name = hit.get("title", "N/A")
                         description = hit.get("description", "")[:200] + "..." if len(hit.get("description", "")) > 200 else hit.get("description", "")
+                        icon_url = hit.get("icon_url", "")
                         version = "Latest"
                         if hit.get("versions"):
                             version = hit["versions"][0] if hit["versions"] else "Latest"
@@ -142,12 +191,17 @@ class PluginController:
                             version=version,
                             description=description
                         )
-                        # Añadir el tipo de proyecto como atributo
-                        plugin.project_type = project_type
+                        # Añadir el tipo clasificado como atributo
+                        plugin.project_type = final_type
+                        # Añadir la URL del icono como atributo
+                        plugin.icon_url = icon_url
                         plugins.append(plugin)
                     
-                    GLib.idle_add(self._log, f"Found {len(plugins)} plugins/mods from Modrinth.\n")
+                    search_type_desc = search_type or 'both plugins and mods'
+                    print(f"DEBUG: Filtered {filtered_count} items from {total_hits} total hits (searching for {search_type_desc})")
+                    GLib.idle_add(self._log, f"Found {len(plugins)} {search_type_desc} from Modrinth.\n")
                 else:
+                    print("DEBUG: No results found from Modrinth")
                     GLib.idle_add(self._log, "No results found from Modrinth.\n")
                 
                 GLib.idle_add(callback, plugins)
