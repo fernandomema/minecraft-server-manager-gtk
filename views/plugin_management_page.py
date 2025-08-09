@@ -296,9 +296,17 @@ class PluginManagementPage:
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
         vbox.pack_start(hbox, False, False, 0)
 
-        download_button = Gtk.Button(label=_("Download Selected"))
-        download_button.connect("clicked", self._on_download_online_plugin_clicked)
-        hbox.pack_start(download_button, False, False, 0)
+        # Botón de descarga con spinner
+        self.download_button = Gtk.Button()
+        button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
+        self.download_spinner = Gtk.Spinner()
+        self.download_spinner.set_no_show_all(True)
+        self.download_label = Gtk.Label(_("Download Selected"))
+        button_box.pack_start(self.download_spinner, False, False, 0)
+        button_box.pack_start(self.download_label, False, False, 0)
+        self.download_button.add(button_box)
+        self.download_button.connect("clicked", self._on_download_online_plugin_clicked)
+        hbox.pack_start(self.download_button, False, False, 0)
 
         info_button = Gtk.Button(label=_("View Info"))
         info_button.connect("clicked", self._on_view_plugin_info_clicked)
@@ -419,11 +427,23 @@ class PluginManagementPage:
         if not project_id:
             self.console_manager.log_to_console("Error: No project ID available for download.\n")
             return
-        
+
         self.console_manager.log_to_console(f"Starting download of {plugin_name} from {plugin_source}...\n")
-        
+
+        # Mostrar spinner y desactivar el botón durante la descarga
+        self.download_button.set_sensitive(False)
+        self.download_label.hide()
+        self.download_spinner.show()
+        self.download_spinner.start()
+
         # Callback para manejar el resultado de la descarga
         def download_callback(success, message):
+            # Restaurar el estado del botón
+            self.download_spinner.stop()
+            self.download_spinner.hide()
+            self.download_label.show()
+            self.download_button.set_sensitive(True)
+
             if success:
                 self.console_manager.log_to_console(f"✓ {message}\n")
                 # Refrescar la lista de plugins locales
