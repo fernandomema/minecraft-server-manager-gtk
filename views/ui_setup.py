@@ -145,9 +145,11 @@ class UISetup:
         # Elementos de la barra lateral
         server_row = UISetup.create_sidebar_row("Server Management", "applications-system")
         plugin_row = UISetup.create_sidebar_row("Plugin Manager", "application-x-addon")
+        config_row = UISetup.create_sidebar_row("Config Editor", "preferences-system")
         
         sidebar_list.add(server_row)
         sidebar_list.add(plugin_row)
+        sidebar_list.add(config_row)
         
         sidebar_box.pack_start(sidebar_list, False, False, 0)
         
@@ -159,7 +161,8 @@ class UISetup:
         return {
             'sidebar_list': sidebar_list,
             'server_row': server_row,
-            'plugin_row': plugin_row
+            'plugin_row': plugin_row,
+            'config_row': config_row
         }
 
     @staticmethod

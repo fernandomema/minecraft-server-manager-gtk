@@ -13,6 +13,7 @@ from views.ui_setup import UISetup
 from views.console_manager import ConsoleManager
 from views.server_management_page import ServerManagementPage
 from views.plugin_management_page import PluginManagementPage
+from views.config_editor_page import ConfigEditorPage
 from models.server import MinecraftServer
 
 
@@ -56,6 +57,9 @@ class MinecraftServerManager(Gtk.Window):
         )
         self.plugin_management_page = PluginManagementPage(
             self, self.plugin_controller, self.console_manager
+        )
+        self.config_editor_page = ConfigEditorPage(
+            self, self.server_controller, self.console_manager
         )
         
         # Configurar callbacks
@@ -121,6 +125,7 @@ class MinecraftServerManager(Gtk.Window):
         self.sidebar_list = sidebar_widgets['sidebar_list']
         self.server_row = sidebar_widgets['server_row']
         self.plugin_row = sidebar_widgets['plugin_row']
+        self.config_row = sidebar_widgets['config_row']
         
     def _create_sidebar_row(self, label_text, icon_name):
         """Crea una fila para la barra lateral - DEPRECATED, use UISetup.create_sidebar_row"""
@@ -134,9 +139,11 @@ class MinecraftServerManager(Gtk.Window):
         # Crear las páginas usando los nuevos managers
         server_page = self.server_management_page.create_page()
         plugin_page = self.plugin_management_page.create_page()
+        config_page = self.config_editor_page.create_page()
         
         self.content_stack.add_named(server_page, "server_management")
         self.content_stack.add_named(plugin_page, "plugin_manager")
+        self.content_stack.add_named(config_page, "config_editor")
         
         # Ahora que todo está configurado, conectar la señal y hacer selección inicial
         self.sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
@@ -153,6 +160,8 @@ class MinecraftServerManager(Gtk.Window):
             self.content_stack.set_visible_child_name("server_management")
         elif page_name == "Plugin Manager":
             self.content_stack.set_visible_child_name("plugin_manager")
+        elif page_name == "Config Editor":
+            self.content_stack.set_visible_child_name("config_editor")
 
     def _load_initial_data(self):
         """Carga los datos iniciales"""
@@ -203,6 +212,7 @@ class MinecraftServerManager(Gtk.Window):
         # Notificar a las páginas
         self.server_management_page.select_server(server)
         self.plugin_management_page.select_server(server)
+        self.config_editor_page.select_server(server)
 
     def _update_header_buttons(self):
         """Actualiza el estado de los botones del header"""
