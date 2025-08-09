@@ -38,7 +38,7 @@ def setup_i18n():
             pass
     
     # Obtener el idioma del sistema
-    lang = locale.getdefaultlocale()[0]
+    lang = locale.getlocale()[0]
     if lang:
         # Extraer solo el código de idioma (ej: 'es' de 'es_ES')
         lang_code = lang.split('_')[0]
