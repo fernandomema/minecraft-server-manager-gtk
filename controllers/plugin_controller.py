@@ -6,6 +6,7 @@ import urllib.request
 import urllib.parse
 import threading
 import os
+import socket
 from typing import List, Dict, Optional, Callable
 from gi.repository import GLib
 
@@ -122,7 +123,7 @@ class PluginController:
                 request = urllib.request.Request(url)
                 request.add_header('User-Agent', 'MinecraftServerManager/1.0')
                 
-                with urllib.request.urlopen(request) as response:
+                with urllib.request.urlopen(request, timeout=10) as response:
                     data = json.loads(response.read().decode())
                 
                 plugins = []
@@ -182,8 +183,14 @@ class PluginController:
             except urllib.error.HTTPError as e:
                 GLib.idle_add(self._log, f"DEBUG: HTTP Error {e.code}: {e.reason}\n")
                 GLib.idle_add(callback, [])
+            except socket.timeout:
+                GLib.idle_add(self._log, "DEBUG: Connection to Modrinth timed out\n")
+                GLib.idle_add(callback, [])
             except urllib.error.URLError as e:
-                GLib.idle_add(self._log, f"DEBUG: URL Error: {e.reason}\n")
+                if isinstance(e.reason, socket.timeout):
+                    GLib.idle_add(self._log, "DEBUG: Connection to Modrinth timed out\n")
+                else:
+                    GLib.idle_add(self._log, f"DEBUG: URL Error: {e.reason}\n")
                 GLib.idle_add(callback, [])
             except Exception as e:
                 GLib.idle_add(self._log, f"DEBUG: Error searching Modrinth: {e}\n")
@@ -209,7 +216,7 @@ class PluginController:
                 request = urllib.request.Request(project_url)
                 request.add_header('User-Agent', 'MinecraftServerManager/1.0')
                 
-                with urllib.request.urlopen(request) as response:
+                with urllib.request.urlopen(request, timeout=10) as response:
                     project_data = json.loads(response.read().decode())
                 
                 # Obtener las versiones del proyecto
@@ -217,7 +224,7 @@ class PluginController:
                 request = urllib.request.Request(versions_url)
                 request.add_header('User-Agent', 'MinecraftServerManager/1.0')
                 
-                with urllib.request.urlopen(request) as response:
+                with urllib.request.urlopen(request, timeout=10) as response:
                     versions_data = json.loads(response.read().decode())
                 
                 if not versions_data:
@@ -269,7 +276,10 @@ class PluginController:
                 
                 # Descargar el archivo
                 file_path = os.path.join(plugins_dir, filename)
-                urllib.request.urlretrieve(download_url, file_path)
+                download_request = urllib.request.Request(download_url)
+                download_request.add_header('User-Agent', 'MinecraftServerManager/1.0')
+                with urllib.request.urlopen(download_request, timeout=10) as response, open(file_path, "wb") as out_file:
+                    out_file.write(response.read())
                 
                 # Solo guardar metadatos, no agregar a la lista (se hará en refresh)
                 plugin_name_clean = os.path.splitext(filename)[0]
@@ -280,6 +290,17 @@ class PluginController:
                 
             except urllib.error.HTTPError as e:
                 error_msg = f"HTTP Error {e.code}: {e.reason}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+            except socket.timeout:
+                error_msg = "Connection to Modrinth timed out"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+            except urllib.error.URLError as e:
+                if isinstance(e.reason, socket.timeout):
+                    error_msg = "Connection to Modrinth timed out"
+                else:
+                    error_msg = f"URL Error: {e.reason}"
                 GLib.idle_add(callback, False, error_msg)
                 GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
             except Exception as e:
