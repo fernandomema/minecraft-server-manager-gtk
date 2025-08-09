@@ -320,6 +320,11 @@ class PluginManagementPage:
             source_path = dialog.get_filename()
             if self.plugin_controller.add_local_plugin(source_path, self.selected_server.path):
                 self.plugin_controller.refresh_local_plugins(self.selected_server.path)
+            else:
+                # Mostrar error si no se pudo detectar el tipo o copiar
+                self.console_manager.log_to_console(
+                    "Could not add file. Ensure it is a valid plugin or mod JAR.\n"
+                )
 
         dialog.destroy()
 

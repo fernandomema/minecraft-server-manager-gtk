@@ -32,6 +32,21 @@ class PluginController:
         """Envía un mensaje de log"""
         if self.search_callback:
             self.search_callback(message)
+
+    def _detect_plugin_type(self, filename: str) -> Optional[str]:
+        """Detecta si un archivo es un plugin o mod.
+
+        Reutiliza la heurística simple utilizada en la vista. Devuelve
+        "plugin" o "mod". Si el archivo no es un JAR o no puede
+        determinarse, devuelve ``None``.
+        """
+        lower = filename.lower()
+        if not lower.endswith(".jar"):
+            return None
+
+        if "/mods/" in lower or any(keyword in lower for keyword in ["forge", "fabric", "quilt", "mod"]):
+            return "mod"
+        return "plugin"
     
     def _get_plugin_metadata_file(self, server_path: str) -> str:
         """Obtiene la ruta del archivo de metadatos de plugins"""
@@ -59,13 +74,21 @@ class PluginController:
             GLib.idle_add(self._log, f"Error saving plugin metadata: {e}\n")
             return False
     
-    def _add_plugin_metadata(self, server_path: str, plugin_name: str, install_method: str, project_id: Optional[str] = None):
+    def _add_plugin_metadata(
+        self,
+        server_path: str,
+        plugin_name: str,
+        install_method: str,
+        project_id: Optional[str] = None,
+        plugin_type: str = "plugin",
+    ):
         """Añade metadatos para un plugin"""
         metadata = self._load_plugin_metadata(server_path)
         metadata[plugin_name] = {
             "install_method": install_method.capitalize(),
             "project_id": project_id,
-            "installed_at": __import__("datetime").datetime.now().isoformat()
+            "installed_at": __import__("datetime").datetime.now().isoformat(),
+            "type": plugin_type,
         }
         self._save_plugin_metadata(server_path, metadata)
     
@@ -288,7 +311,13 @@ class PluginController:
                 
                 # Solo guardar metadatos, no agregar a la lista (se hará en refresh)
                 plugin_name_clean = os.path.splitext(filename)[0]
-                self._add_plugin_metadata(server_path, plugin_name_clean, "Modrinth", project_id)
+                self._add_plugin_metadata(
+                    server_path,
+                    plugin_name_clean,
+                    "Modrinth",
+                    project_id,
+                    project_type
+                )
                 
                 GLib.idle_add(callback, True, f"Successfully downloaded {plugin_name}")
                 GLib.idle_add(self._log, f"Download completed: {filename}\n")
@@ -423,29 +452,34 @@ class PluginController:
             return False
     
     def add_local_plugin(self, source_path: str, server_path: str, install_method: str = "Manual", project_id: Optional[str] = None) -> bool:
-        """Añade un plugin local copiándolo al directorio de plugins del servidor"""
+        """Añade un plugin o mod local copiándolo al directorio correspondiente"""
         try:
             import shutil
-            
-            # Determinar directorio de destino (plugins o mods)
-            plugins_dir = os.path.join(server_path, "plugins")
-            mods_dir = os.path.join(server_path, "mods")
-            
-            # Crear directorio plugins si no existe
-            os.makedirs(plugins_dir, exist_ok=True)
-            
+
             filename = os.path.basename(source_path)
-            target_path = os.path.join(plugins_dir, filename)
-            
+            plugin_type = self._detect_plugin_type(source_path)
+
+            if not plugin_type:
+                self._log("Could not detect if the file is a plugin or a mod.\n")
+                return False
+
+            if plugin_type == "plugin":
+                target_dir = os.path.join(server_path, "plugins")
+            else:
+                target_dir = os.path.join(server_path, "mods")
+
+            os.makedirs(target_dir, exist_ok=True)
+
+            target_path = os.path.join(target_dir, filename)
             shutil.copy2(source_path, target_path)
-            
+
             # Guardar metadatos
             plugin_name = filename.replace('.jar', '')
-            self._add_plugin_metadata(server_path, plugin_name, install_method, project_id)
-            
-            self._log(f"Added plugin: {filename} (Method: {install_method})\n")
+            self._add_plugin_metadata(server_path, plugin_name, install_method, project_id, plugin_type)
+
+            self._log(f"Added {plugin_type}: {filename} (Method: {install_method})\n")
             return True
-            
+
         except Exception as e:
             self._log(f"Error adding plugin: {e}\n")
             return False
