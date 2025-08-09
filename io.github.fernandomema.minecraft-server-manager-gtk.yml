@@ -41,5 +41,6 @@ modules:
       - mkdir -p ${FLATPAK_DEST}/share/app-info/media
       - cp screenshots/*.png ${FLATPAK_DEST}/share/app-info/media/
     sources:
-      - type: dir
-        path: .
+      - type: git
+        url: https://github.com/fernandomema/minecraft-server-manager-gtk.git
+        tag: v1.0.0
