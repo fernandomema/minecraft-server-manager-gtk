@@ -54,6 +54,34 @@ class PluginManagementPage:
         
         return plugin_page
 
+    def _render_icon_cell(self, column, cell, model, iter, data):
+        """Renderiza el icono según el tipo de plugin/mod local"""
+        icon_name = model[iter][0]
+        if icon_name == "plugin":
+            cell.set_property("icon-name", "application-x-addon")
+        elif icon_name == "mod":
+            cell.set_property("icon-name", "applications-games")
+        else:
+            cell.set_property("icon-name", "application-x-executable")
+
+    def _render_online_icon_cell(self, column, cell, model, iter, data):
+        """Renderiza el icono según el tipo de plugin/mod online"""
+        plugin_type = model[iter][0]
+        if plugin_type == "plugin":
+            cell.set_property("icon-name", "application-x-addon")
+        elif plugin_type == "mod":
+            cell.set_property("icon-name", "applications-games")
+        else:
+            cell.set_property("icon-name", "package-x-generic")
+
+    def _detect_plugin_type(self, filename: str) -> str:
+        """Detecta si un archivo es un plugin o mod basado en su ubicación y nombre"""
+        # Heurística simple: si está en "mods" o contiene "forge", "fabric", etc., es un mod
+        if "/mods/" in filename or any(keyword in filename.lower() for keyword in ["forge", "fabric", "quilt", "mod"]):
+            return "mod"
+        else:
+            return "plugin"
+
     def _setup_local_plugins_section(self, container):
         """Configura la sección de plugins locales"""
         frame = Gtk.Frame(label="Local Plugins/Mods")
@@ -62,13 +90,28 @@ class PluginManagementPage:
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         frame.add(vbox)
 
-        # Lista de plugins locales
-        self.local_plugin_store = Gtk.ListStore(str, str)  # name, path
+        # Lista de plugins locales con iconos y método de instalación
+        self.local_plugin_store = Gtk.ListStore(str, str, str, str)  # icon_name, name, install_method, path
         self.local_plugin_view = Gtk.TreeView(model=self.local_plugin_store)
         
-        renderer = Gtk.CellRendererText()
-        column = Gtk.TreeViewColumn("Plugin/Mod Name", renderer, text=0)
-        self.local_plugin_view.append_column(column)
+        # Columna de icono
+        icon_renderer = Gtk.CellRendererPixbuf()
+        icon_column = Gtk.TreeViewColumn("Type", icon_renderer)
+        icon_column.set_cell_data_func(icon_renderer, self._render_icon_cell)
+        icon_column.set_fixed_width(50)
+        self.local_plugin_view.append_column(icon_column)
+        
+        # Columna de nombre
+        name_renderer = Gtk.CellRendererText()
+        name_column = Gtk.TreeViewColumn("Plugin/Mod Name", name_renderer, text=1)
+        name_column.set_expand(True)
+        self.local_plugin_view.append_column(name_column)
+        
+        # Columna de método de instalación
+        method_renderer = Gtk.CellRendererText()
+        method_column = Gtk.TreeViewColumn("Install Method", method_renderer, text=2)
+        method_column.set_fixed_width(120)
+        self.local_plugin_view.append_column(method_column)
 
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_hexpand(True)
@@ -87,6 +130,10 @@ class PluginManagementPage:
         remove_button = Gtk.Button(label="Remove Selected")
         remove_button.connect("clicked", self._on_remove_local_plugin_clicked)
         hbox.pack_start(remove_button, False, False, 0)
+        
+        update_button = Gtk.Button(label="Update Selected")
+        update_button.connect("clicked", self._on_update_local_plugin_clicked)
+        hbox.pack_start(update_button, False, False, 0)
 
     def _setup_online_search_section(self, container):
         """Configura la sección de búsqueda online"""
@@ -102,19 +149,30 @@ class PluginManagementPage:
 
         self.search_entry = Gtk.Entry()
         self.search_entry.set_placeholder_text("Search plugins/mods...")
+        self.search_entry.connect("activate", self._on_search_online_clicked)  # Buscar al presionar Enter
         search_hbox.pack_start(self.search_entry, True, True, 0)
 
-        search_button = Gtk.Button(label="Search")
+        search_button = Gtk.Button(label="Search Online")
         search_button.connect("clicked", self._on_search_online_clicked)
         search_hbox.pack_start(search_button, False, False, 0)
 
-        # Lista de resultados
-        self.online_search_store = Gtk.ListStore(str, str, str)  # name, source, version
+        # Lista de resultados con iconos y descripción
+        self.online_search_store = Gtk.ListStore(str, str, str, str, str)  # type, name, source, version, description
         self.online_search_view = Gtk.TreeView(model=self.online_search_store)
         
-        for i, title in enumerate(["Name", "Source", "Version"]):
+        # Columna de icono
+        icon_renderer = Gtk.CellRendererPixbuf()
+        icon_column = Gtk.TreeViewColumn("Type", icon_renderer)
+        icon_column.set_cell_data_func(icon_renderer, self._render_online_icon_cell)
+        self.online_search_view.append_column(icon_column)
+        
+        # Columnas de texto
+        columns = [("Name", 1), ("Source", 2), ("Version", 3)]
+        for title, index in columns:
             renderer = Gtk.CellRendererText()
-            column = Gtk.TreeViewColumn(title, renderer, text=i)
+            column = Gtk.TreeViewColumn(title, renderer, text=index)
+            if title == "Name":
+                column.set_expand(True)  # Expandir la columna de nombre
             self.online_search_view.append_column(column)
 
         scrolled = Gtk.ScrolledWindow()
@@ -131,9 +189,9 @@ class PluginManagementPage:
         download_button.connect("clicked", self._on_download_online_plugin_clicked)
         hbox.pack_start(download_button, False, False, 0)
 
-        update_button = Gtk.Button(label="Update Selected")
-        update_button.connect("clicked", self._on_update_online_plugin_clicked)
-        hbox.pack_start(update_button, False, False, 0)
+        info_button = Gtk.Button(label="View Info")
+        info_button.connect("clicked", self._on_view_plugin_info_clicked)
+        hbox.pack_start(info_button, False, False, 0)
 
     # Event Handlers - Plugin Management
     def _on_add_local_plugin_clicked(self, widget):
@@ -175,11 +233,13 @@ class PluginManagementPage:
             self.console_manager.log_to_console("Please select a plugin to remove.\n")
             return
 
-        plugin_name = model[treeiter][0]
-        plugin_path = model[treeiter][1]
+        plugin_type = model[treeiter][0]  # Tipo (plugin/mod)
+        plugin_name = model[treeiter][1]  # Nombre
+        install_method = model[treeiter][2]  # Método de instalación
+        plugin_path = model[treeiter][3]  # Ruta
         
-        plugin = Plugin(plugin_name, "Local", file_path=plugin_path)
-        if self.plugin_controller.remove_local_plugin(plugin):
+        plugin = Plugin(plugin_name, "Local", file_path=plugin_path, install_method=install_method)
+        if self.plugin_controller.remove_local_plugin(plugin, self.selected_server.path):
             self.plugin_controller.refresh_local_plugins(self.selected_server.path)
 
     def _on_search_online_clicked(self, widget):
@@ -194,11 +254,123 @@ class PluginManagementPage:
 
     def _on_download_online_plugin_clicked(self, widget):
         """Maneja el clic en descargar plugin online"""
-        self.console_manager.log_to_console("Download Online Plugin functionality not yet implemented.\n")
+        if not self.selected_server:
+            self.console_manager.log_to_console("Please select a server first.\n")
+            return
+            
+        selection = self.online_search_view.get_selection()
+        model, treeiter = selection.get_selected()
+        
+        if not treeiter:
+            self.console_manager.log_to_console("Please select a plugin to download.\n")
+            return
 
-    def _on_update_online_plugin_clicked(self, widget):
-        """Maneja el clic en actualizar plugin online"""
-        self.console_manager.log_to_console("Update Online Plugin functionality not yet implemented.\n")
+        plugin_type = model[treeiter][0]
+        plugin_name = model[treeiter][1]
+        plugin_source = model[treeiter][2]
+        plugin_version = model[treeiter][3]
+        
+        self.console_manager.log_to_console(f"Starting download of {plugin_name} from {plugin_source}...\n")
+        
+        # Por ahora, mostrar un mensaje indicando que se está trabajando en esta funcionalidad
+        dialog = Gtk.MessageDialog(
+            parent=self.parent_window,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text="Download Functionality"
+        )
+        dialog.format_secondary_text(
+            f"Download functionality for {plugin_name} is coming soon!\n\n"
+            f"Plugin: {plugin_name}\n"
+            f"Source: {plugin_source}\n"
+            f"Version: {plugin_version}\n"
+            f"Type: {plugin_type.title()}\n\n"
+            "For now, please download manually and use 'Add Local Plugin'."
+        )
+        dialog.run()
+        dialog.destroy()
+
+    def _on_update_local_plugin_clicked(self, widget):
+        """Maneja el clic en actualizar plugin local"""
+        selection = self.local_plugin_view.get_selection()
+        model, treeiter = selection.get_selected()
+        
+        if not treeiter:
+            self.console_manager.log_to_console("Please select a plugin to update.\n")
+            return
+
+        plugin_type = model[treeiter][0]
+        plugin_name = model[treeiter][1]
+        install_method = model[treeiter][2]
+        plugin_path = model[treeiter][3]
+        
+        if install_method == "Manual":
+            dialog = Gtk.MessageDialog(
+                parent=self.parent_window,
+                flags=Gtk.DialogFlags.MODAL,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.OK,
+                text="Cannot Update Manual Plugin"
+            )
+            dialog.format_secondary_text(
+                f"'{plugin_name}' was installed manually and cannot be updated automatically.\n\n"
+                "To update this plugin:\n"
+                "1. Download the new version manually\n"
+                "2. Remove the old version\n"
+                "3. Add the new version using 'Add Local Plugin'"
+            )
+            dialog.run()
+            dialog.destroy()
+        else:
+            self.console_manager.log_to_console(f"Checking for updates for {plugin_name} from {install_method}...\n")
+            # TODO: Implementar lógica de actualización automática
+            dialog = Gtk.MessageDialog(
+                parent=self.parent_window,
+                flags=Gtk.DialogFlags.MODAL,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.OK,
+                text="Update Feature Coming Soon"
+            )
+            dialog.format_secondary_text(
+                f"Automatic updates for plugins from {install_method} will be available in a future version.\n\n"
+                f"Plugin: {plugin_name}\n"
+                f"Source: {install_method}"
+            )
+            dialog.run()
+            dialog.destroy()
+
+    def _on_view_plugin_info_clicked(self, widget):
+        """Maneja el clic en ver información del plugin"""
+        selection = self.online_search_view.get_selection()
+        model, treeiter = selection.get_selected()
+        
+        if not treeiter:
+            self.console_manager.log_to_console("Please select a plugin to view info.\n")
+            return
+
+        plugin_type = model[treeiter][0]
+        plugin_name = model[treeiter][1]
+        plugin_source = model[treeiter][2]
+        plugin_version = model[treeiter][3]
+        plugin_description = model[treeiter][4] if len(model[treeiter]) > 4 else "No description available"
+        
+        dialog = Gtk.MessageDialog(
+            parent=self.parent_window,
+            flags=Gtk.DialogFlags.MODAL,
+            message_type=Gtk.MessageType.INFO,
+            buttons=Gtk.ButtonsType.OK,
+            text=f"{plugin_name} - Information"
+        )
+        dialog.format_secondary_text(
+            f"Name: {plugin_name}\n"
+            f"Type: {plugin_type.title()}\n"
+            f"Source: {plugin_source}\n"
+            f"Version: {plugin_version}\n\n"
+            f"Description:\n{plugin_description}"
+        )
+        dialog.run()
+        dialog.destroy()
 
     def select_server(self, server: MinecraftServer):
         """Selecciona un servidor para gestionar plugins"""
@@ -219,11 +391,28 @@ class PluginManagementPage:
         if self.local_plugin_store:
             self.local_plugin_store.clear()
             for plugin in plugins:
-                self.local_plugin_store.append([plugin.name, plugin.file_path or ""])
+                plugin_type = self._detect_plugin_type(plugin.file_path or plugin.name)
+                install_method = getattr(plugin, 'install_method', 'Manual')
+                display_method = plugin.get_install_method_display() if hasattr(plugin, 'get_install_method_display') else install_method
+                self.local_plugin_store.append([
+                    plugin_type, 
+                    plugin.name, 
+                    display_method,
+                    plugin.file_path or ""
+                ])
 
     def _on_search_results(self, plugins):
         """Callback con resultados de búsqueda"""
         if self.online_search_store:
             self.online_search_store.clear()
             for plugin in plugins:
-                self.online_search_store.append([plugin.name, plugin.source, plugin.version])
+                # Determinar tipo basado en categorías de Modrinth
+                plugin_type = getattr(plugin, 'project_type', 'plugin')  # Default a plugin
+                description = getattr(plugin, 'description', 'No description available')
+                self.online_search_store.append([
+                    plugin_type, 
+                    plugin.name, 
+                    plugin.source, 
+                    plugin.version,
+                    description
+                ])
