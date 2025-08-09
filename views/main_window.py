@@ -13,11 +13,13 @@ from controllers.server_controller import ServerController
 from controllers.download_controller import DownloadController
 from controllers.plugin_controller import PluginController
 from controllers.player_controller import PlayerController
+from controllers.resource_pack_controller import ResourcePackController
 from views.ui_setup import UISetup
 from views.console_manager import ConsoleManager
 from views.server_management_page import ServerManagementPage
 from views.plugin_management_page import PluginManagementPage
 from views.player_management_page import PlayerManagementPage
+from views.resource_pack_page import ResourcePackPage
 from views.config_editor_page import ConfigEditorPage
 from views.log_viewer_page import LogViewerPage
 from views.port_analysis_page import PortAnalysisPage
@@ -53,6 +55,7 @@ class MinecraftServerManager(Gtk.Window):
         self.download_controller = DownloadController()
         self.plugin_controller = PluginController()
         self.player_controller = PlayerController()
+        self.resource_pack_controller = ResourcePackController()
 
     def _init_managers(self):
         """Inicializa los managers y páginas"""
@@ -68,6 +71,9 @@ class MinecraftServerManager(Gtk.Window):
         )
         self.player_management_page = PlayerManagementPage(
             self, self.console_manager, self.player_controller
+        )
+        self.resource_pack_page = ResourcePackPage(
+            self, self.console_manager, self.resource_pack_controller
         )
         self.config_editor_page = ConfigEditorPage(
             self, self.server_controller, self.console_manager
@@ -90,6 +96,10 @@ class MinecraftServerManager(Gtk.Window):
         # Plugin controller callbacks
         self.plugin_controller.set_search_callback(self.console_manager.log_to_console)
         self.plugin_controller.set_plugins_updated_callback(self.plugin_management_page.on_plugins_updated)
+
+        # Resource pack controller callbacks
+        self.resource_pack_controller.set_log_callback(self.console_manager.log_to_console)
+        self.resource_pack_controller.set_packs_updated_callback(self.resource_pack_page.on_packs_updated)
 
     def _setup_ui(self):
         """Configura la interfaz de usuario principal"""
@@ -139,6 +149,7 @@ class MinecraftServerManager(Gtk.Window):
         self.server_row = sidebar_widgets['server_row']
         self.plugin_row = sidebar_widgets['plugin_row']
         self.player_row = sidebar_widgets['player_row']
+        self.resource_row = sidebar_widgets['resource_row']
         self.config_row = sidebar_widgets['config_row']
         self.port_row = sidebar_widgets['port_row']
         self.logs_row = sidebar_widgets['logs_row']
@@ -156,6 +167,7 @@ class MinecraftServerManager(Gtk.Window):
         server_page = self.server_management_page.create_page()
         plugin_page = self.plugin_management_page.create_page()
         player_page = self.player_management_page.create_page()
+        resource_page = self.resource_pack_page.create_page()
         config_page = self.config_editor_page.create_page()
         port_page = self.port_analysis_page.create_page()
         log_page = self.log_viewer_page.create_page()
@@ -163,6 +175,7 @@ class MinecraftServerManager(Gtk.Window):
         self.content_stack.add_named(server_page, "server_management")
         self.content_stack.add_named(plugin_page, "plugin_manager")
         self.content_stack.add_named(player_page, "player_management")
+        self.content_stack.add_named(resource_page, "resource_packs")
         self.content_stack.add_named(config_page, "config_editor")
         self.content_stack.add_named(port_page, "port_analyzer")
         self.content_stack.add_named(log_page, "log_viewer")
@@ -184,6 +197,8 @@ class MinecraftServerManager(Gtk.Window):
             self.content_stack.set_visible_child_name("plugin_manager")
         elif page_name == _("Player Management"):
             self.content_stack.set_visible_child_name("player_management")
+        elif page_name == _("Resource Packs"):
+            self.content_stack.set_visible_child_name("resource_packs")
         elif page_name == _("Config Editor"):
             self.content_stack.set_visible_child_name("config_editor")
         elif page_name == _("Port Analyzer"):
@@ -241,6 +256,7 @@ class MinecraftServerManager(Gtk.Window):
         self.server_management_page.select_server(server)
         self.plugin_management_page.select_server(server)
         self.player_management_page.select_server(server)
+        self.resource_pack_page.select_server(server)
         self.config_editor_page.select_server(server)
         self.port_analysis_page.select_server(server)
         self.log_viewer_page.select_server(server)

@@ -5,10 +5,13 @@ from typing import Optional, Dict, Any
 
 
 class MinecraftServer:
-    def __init__(self, name: str, path: str, jar: str):
+    def __init__(self, name: str, path: str, jar: str,
+                 resource_pack: str = "", resource_pack_sha1: str = ""):
         self.name = name
         self.path = path
         self.jar = jar
+        self.resource_pack = resource_pack
+        self.resource_pack_sha1 = resource_pack_sha1
         self.process = None
         self.is_running = False
     
@@ -17,7 +20,9 @@ class MinecraftServer:
         return {
             "name": self.name,
             "path": self.path,
-            "jar": self.jar
+            "jar": self.jar,
+            "resource_pack": self.resource_pack,
+            "resource_pack_sha1": self.resource_pack_sha1
         }
     
     @classmethod
@@ -26,7 +31,9 @@ class MinecraftServer:
         return cls(
             name=data.get("name", ""),
             path=data.get("path", ""),
-            jar=data.get("jar", "DOWNLOAD_LATER")
+            jar=data.get("jar", "DOWNLOAD_LATER"),
+            resource_pack=data.get("resource_pack", ""),
+            resource_pack_sha1=data.get("resource_pack_sha1", "")
         )
     
     def is_valid(self) -> bool:
