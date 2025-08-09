@@ -12,10 +12,12 @@ _ = gettext.gettext
 from controllers.server_controller import ServerController
 from controllers.download_controller import DownloadController
 from controllers.plugin_controller import PluginController
+from controllers.player_controller import PlayerController
 from views.ui_setup import UISetup
 from views.console_manager import ConsoleManager
 from views.server_management_page import ServerManagementPage
 from views.plugin_management_page import PluginManagementPage
+from views.player_management_page import PlayerManagementPage
 from views.config_editor_page import ConfigEditorPage
 from views.log_viewer_page import LogViewerPage
 from views.port_analysis_page import PortAnalysisPage
@@ -50,6 +52,7 @@ class MinecraftServerManager(Gtk.Window):
         self.server_controller = ServerController()
         self.download_controller = DownloadController()
         self.plugin_controller = PluginController()
+        self.player_controller = PlayerController()
 
     def _init_managers(self):
         """Inicializa los managers y páginas"""
@@ -62,6 +65,9 @@ class MinecraftServerManager(Gtk.Window):
         )
         self.plugin_management_page = PluginManagementPage(
             self, self.console_manager, self.plugin_controller
+        )
+        self.player_management_page = PlayerManagementPage(
+            self, self.console_manager, self.player_controller
         )
         self.config_editor_page = ConfigEditorPage(
             self, self.server_controller, self.console_manager
@@ -127,11 +133,12 @@ class MinecraftServerManager(Gtk.Window):
         }
         
         sidebar_widgets = UISetup.setup_sidebar(main_paned, sidebar_callbacks)
-        
+
         # Store references to widgets
         self.sidebar_list = sidebar_widgets['sidebar_list']
         self.server_row = sidebar_widgets['server_row']
         self.plugin_row = sidebar_widgets['plugin_row']
+        self.player_row = sidebar_widgets['player_row']
         self.config_row = sidebar_widgets['config_row']
         self.port_row = sidebar_widgets['port_row']
         self.logs_row = sidebar_widgets['logs_row']
@@ -148,12 +155,14 @@ class MinecraftServerManager(Gtk.Window):
         # Crear las páginas usando los nuevos managers
         server_page = self.server_management_page.create_page()
         plugin_page = self.plugin_management_page.create_page()
+        player_page = self.player_management_page.create_page()
         config_page = self.config_editor_page.create_page()
         port_page = self.port_analysis_page.create_page()
         log_page = self.log_viewer_page.create_page()
 
         self.content_stack.add_named(server_page, "server_management")
         self.content_stack.add_named(plugin_page, "plugin_manager")
+        self.content_stack.add_named(player_page, "player_management")
         self.content_stack.add_named(config_page, "config_editor")
         self.content_stack.add_named(port_page, "port_analyzer")
         self.content_stack.add_named(log_page, "log_viewer")
@@ -173,6 +182,8 @@ class MinecraftServerManager(Gtk.Window):
             self.content_stack.set_visible_child_name("server_management")
         elif page_name == _("Plugin Manager"):
             self.content_stack.set_visible_child_name("plugin_manager")
+        elif page_name == _("Player Management"):
+            self.content_stack.set_visible_child_name("player_management")
         elif page_name == _("Config Editor"):
             self.content_stack.set_visible_child_name("config_editor")
         elif page_name == _("Port Analyzer"):
@@ -225,10 +236,11 @@ class MinecraftServerManager(Gtk.Window):
         """Selecciona un servidor"""
         self.selected_server = server
         self._update_header_buttons()
-        
+
         # Notificar a las páginas
         self.server_management_page.select_server(server)
         self.plugin_management_page.select_server(server)
+        self.player_management_page.select_server(server)
         self.config_editor_page.select_server(server)
         self.port_analysis_page.select_server(server)
         self.log_viewer_page.select_server(server)

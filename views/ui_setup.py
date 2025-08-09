@@ -152,27 +152,29 @@ class UISetup:
         # Elementos de la barra lateral
         server_row = UISetup.create_sidebar_row(_("Server Management"), "applications-system")
         plugin_row = UISetup.create_sidebar_row(_("Plugin Manager"), "application-x-addon")
+        player_row = UISetup.create_sidebar_row(_("Player Management"), "system-users")
         config_row = UISetup.create_sidebar_row(_("Config Editor"), "preferences-system")
         port_row = UISetup.create_sidebar_row(_("Port Analyzer"), "network-server")
         logs_row = UISetup.create_sidebar_row(_("Logs"), "text-x-log")
-        
+
         sidebar_list.add(server_row)
         sidebar_list.add(plugin_row)
+        sidebar_list.add(player_row)
         sidebar_list.add(config_row)
         sidebar_list.add(port_row)
         sidebar_list.add(logs_row)
-        
-        sidebar_box.pack_start(sidebar_list, False, False, 0)
-        
+
+        sidebar_box.pack_start(sidebar_list, True, True, 0)  # Asegurando que la lista ocupe espacio en el contenedor
+
         # Separador
         separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
-        
-        main_paned.pack1(sidebar_box, False, False)
-        
+        main_paned.pack1(sidebar_box, False, False)  # Asegurando que la barra lateral se agregue al diseño principal
+
         return {
             'sidebar_list': sidebar_list,
             'server_row': server_row,
             'plugin_row': plugin_row,
+            'player_row': player_row,
             'config_row': config_row,
             'port_row': port_row,
             'logs_row': logs_row
