@@ -202,7 +202,7 @@ class PluginController:
                 GLib.idle_add(callback, [])
         
         threading.Thread(target=perform_search, daemon=True).start()
-    
+
     def download_modrinth_plugin(self, plugin_name: str, project_id: str, server_path: str, callback: Callable[[bool, str], None]):
         """Descarga un plugin desde Modrinth de forma asíncrona
         
@@ -314,6 +314,85 @@ class PluginController:
                 GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
         
         threading.Thread(target=perform_download, daemon=True).start()
+
+    def update_plugin(self, plugin: Plugin, server_path: str, callback: Callable[[bool, str], None]):
+        """Actualiza un plugin instalado desde Modrinth
+
+        Args:
+            plugin: Plugin a actualizar. Debe tener project_id válido
+            server_path: Ruta del servidor donde está instalado el plugin
+            callback: Función callback con (success: bool, message: str)
+        """
+
+        def perform_update():
+            if not plugin.project_id:
+                GLib.idle_add(callback, False, "No project ID available for this plugin")
+                return
+
+            try:
+                GLib.idle_add(self._log, f"Checking Modrinth for updates of {plugin.name}...\n")
+
+                # Obtener versiones del proyecto
+                versions_url = f"{MODRINTH_API_BASE_URL}/project/{plugin.project_id}/version"
+                request = urllib.request.Request(versions_url)
+                request.add_header('User-Agent', 'MinecraftServerManager/1.0')
+
+                with urllib.request.urlopen(request) as response:
+                    versions_data = json.loads(response.read().decode())
+
+                if not versions_data:
+                    GLib.idle_add(callback, False, "No versions available for this plugin")
+                    return
+
+                # Tomar la primera versión que tenga archivos
+                latest_version = None
+                for version in versions_data:
+                    if version.get("files"):
+                        latest_version = version
+                        break
+
+                if not latest_version:
+                    GLib.idle_add(callback, False, "No compatible version found")
+                    return
+
+                download_file = latest_version["files"][0]
+                download_url = download_file["url"]
+                filename = download_file["filename"]
+
+                # Verificar si ya está actualizado comparando el nombre del archivo
+                if plugin.file_path and os.path.basename(plugin.file_path) == filename:
+                    GLib.idle_add(callback, True, "Plugin is already up to date")
+                    return
+
+                plugin_dir = os.path.dirname(plugin.file_path) if plugin.file_path else os.path.join(server_path, "plugins")
+                os.makedirs(plugin_dir, exist_ok=True)
+                new_file_path = os.path.join(plugin_dir, filename)
+
+                GLib.idle_add(self._log, f"Downloading {filename}...\n")
+                urllib.request.urlretrieve(download_url, new_file_path)
+
+                # Eliminar el archivo antiguo
+                if plugin.file_path and os.path.exists(plugin.file_path):
+                    os.remove(plugin.file_path)
+
+                # Actualizar metadatos
+                self._remove_plugin_metadata(server_path, plugin.name)
+                new_plugin_name = os.path.splitext(filename)[0]
+                self._add_plugin_metadata(server_path, new_plugin_name, plugin.install_method, plugin.project_id)
+
+                GLib.idle_add(callback, True, f"Updated {plugin.name}")
+                GLib.idle_add(self._log, f"Update completed: {filename}\n")
+
+            except urllib.error.HTTPError as e:
+                error_msg = f"HTTP Error {e.code}: {e.reason}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Update failed: {error_msg}\n")
+            except Exception as e:
+                error_msg = f"Update error: {str(e)}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Update failed: {error_msg}\n")
+
+        threading.Thread(target=perform_update, daemon=True).start()
 
     def remove_local_plugin(self, plugin: Plugin, server_path: str = None) -> bool:
         """Elimina un plugin local"""

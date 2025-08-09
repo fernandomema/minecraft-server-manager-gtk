@@ -469,23 +469,62 @@ class PluginManagementPage:
             )
             dialog.run()
             dialog.destroy()
+
         else:
-            self.console_manager.log_to_console(f"Checking for updates for {plugin_name} from {install_method}...\n")
-            # TODO: Implementar lógica de actualización automática
-            dialog = Gtk.MessageDialog(
-                parent=self.parent_window,
-                flags=Gtk.DialogFlags.MODAL,
-                message_type=Gtk.MessageType.INFO,
-                buttons=Gtk.ButtonsType.OK,
-                text="Update Feature Coming Soon"
+            # Obtener el objeto Plugin para acceder a metadatos
+            plugins = self.plugin_controller.get_local_plugins(self.selected_server.path)
+            plugin_obj = next((p for p in plugins if p.name == plugin_name), None)
+
+            if not plugin_obj or not plugin_obj.project_id:
+                self.console_manager.log_to_console(f"Cannot update {plugin_name}: missing project ID.\n")
+                dialog = Gtk.MessageDialog(
+                    parent=self.parent_window,
+                    flags=Gtk.DialogFlags.MODAL,
+                    message_type=Gtk.MessageType.ERROR,
+                    buttons=Gtk.ButtonsType.OK,
+                    text="Update Not Available",
+                )
+                dialog.format_secondary_text(
+                    f"'{plugin_name}' cannot be updated automatically because its project ID is unknown."
+                )
+                dialog.run()
+                dialog.destroy()
+                return
+
+            self.console_manager.log_to_console(
+                f"Checking for updates for {plugin_name} from {plugin_obj.install_method}...\n"
             )
-            dialog.format_secondary_text(
-                f"Automatic updates for plugins from {install_method} will be available in a future version.\n\n"
-                f"Plugin: {plugin_name}\n"
-                f"Source: {install_method}"
-            )
-            dialog.run()
-            dialog.destroy()
+
+            def update_callback(success, message):
+                if success:
+                    self.console_manager.log_to_console(f"✓ {message}\n")
+                    self.plugin_controller.refresh_local_plugins(self.selected_server.path)
+                    dialog = Gtk.MessageDialog(
+                        parent=self.parent_window,
+                        flags=Gtk.DialogFlags.MODAL,
+                        message_type=Gtk.MessageType.INFO,
+                        buttons=Gtk.ButtonsType.OK,
+                        text="Update Successful",
+                    )
+                    dialog.format_secondary_text(
+                        f"{plugin_name} has been updated successfully."
+                    )
+                else:
+                    self.console_manager.log_to_console(f"✗ Update failed: {message}\n")
+                    dialog = Gtk.MessageDialog(
+                        parent=self.parent_window,
+                        flags=Gtk.DialogFlags.MODAL,
+                        message_type=Gtk.MessageType.ERROR,
+                        buttons=Gtk.ButtonsType.OK,
+                        text="Update Failed",
+                    )
+                    dialog.format_secondary_text(
+                        f"Failed to update {plugin_name}:\n{message}"
+                    )
+                dialog.run()
+                dialog.destroy()
+
+            self.plugin_controller.update_plugin(plugin_obj, self.selected_server.path, update_callback)
 
     def _on_view_plugin_info_clicked(self, widget):
         """Maneja el clic en ver información del plugin"""
