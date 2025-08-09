@@ -1,0 +1,6 @@
+[Flatpak Ref]
+Title=Minecraft Server Manager
+Name=io.github.fernandomema.MinecraftServerManager
+Branch=stable
+Url=https://fernandomema.github.io/minecraft-server-manager-gtk/flatpakrepo
+IsRuntime=false
