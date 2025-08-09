@@ -17,6 +17,7 @@ from views.console_manager import ConsoleManager
 from views.server_management_page import ServerManagementPage
 from views.plugin_management_page import PluginManagementPage
 from views.config_editor_page import ConfigEditorPage
+from views.log_viewer_page import LogViewerPage
 from views.port_analysis_page import PortAnalysisPage
 from models.server import MinecraftServer
 
@@ -65,6 +66,7 @@ class MinecraftServerManager(Gtk.Window):
         self.config_editor_page = ConfigEditorPage(
             self, self.server_controller, self.console_manager
         )
+        self.log_viewer_page = LogViewerPage(self.server_controller)
         self.port_analysis_page = PortAnalysisPage(self.server_controller)
         
         # Configurar callbacks
@@ -132,6 +134,7 @@ class MinecraftServerManager(Gtk.Window):
         self.plugin_row = sidebar_widgets['plugin_row']
         self.config_row = sidebar_widgets['config_row']
         self.port_row = sidebar_widgets['port_row']
+        self.logs_row = sidebar_widgets['logs_row']
         
     def _create_sidebar_row(self, label_text, icon_name):
         """Crea una fila para la barra lateral - DEPRECATED, use UISetup.create_sidebar_row"""
@@ -147,11 +150,13 @@ class MinecraftServerManager(Gtk.Window):
         plugin_page = self.plugin_management_page.create_page()
         config_page = self.config_editor_page.create_page()
         port_page = self.port_analysis_page.create_page()
-        
+        log_page = self.log_viewer_page.create_page()
+
         self.content_stack.add_named(server_page, "server_management")
         self.content_stack.add_named(plugin_page, "plugin_manager")
         self.content_stack.add_named(config_page, "config_editor")
         self.content_stack.add_named(port_page, "port_analyzer")
+        self.content_stack.add_named(log_page, "log_viewer")
         
         # Ahora que todo está configurado, conectar la señal y hacer selección inicial
         self.sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
@@ -172,6 +177,8 @@ class MinecraftServerManager(Gtk.Window):
             self.content_stack.set_visible_child_name("config_editor")
         elif page_name == _("Port Analyzer"):
             self.content_stack.set_visible_child_name("port_analyzer")
+        elif page_name == _("Logs"):
+            self.content_stack.set_visible_child_name("log_viewer")
 
     def _load_initial_data(self):
         """Carga los datos iniciales"""
@@ -223,6 +230,8 @@ class MinecraftServerManager(Gtk.Window):
         self.server_management_page.select_server(server)
         self.plugin_management_page.select_server(server)
         self.config_editor_page.select_server(server)
+        self.port_analysis_page.select_server(server)
+        self.log_viewer_page.select_server(server)
 
     def _update_header_buttons(self):
         """Actualiza el estado de los botones del header"""

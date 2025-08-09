@@ -154,11 +154,13 @@ class UISetup:
         plugin_row = UISetup.create_sidebar_row(_("Plugin Manager"), "application-x-addon")
         config_row = UISetup.create_sidebar_row(_("Config Editor"), "preferences-system")
         port_row = UISetup.create_sidebar_row(_("Port Analyzer"), "network-server")
+        logs_row = UISetup.create_sidebar_row(_("Logs"), "text-x-log")
         
         sidebar_list.add(server_row)
         sidebar_list.add(plugin_row)
         sidebar_list.add(config_row)
         sidebar_list.add(port_row)
+        sidebar_list.add(logs_row)
         
         sidebar_box.pack_start(sidebar_list, False, False, 0)
         
@@ -172,7 +174,8 @@ class UISetup:
             'server_row': server_row,
             'plugin_row': plugin_row,
             'config_row': config_row,
-            'port_row': port_row
+            'port_row': port_row,
+            'logs_row': logs_row
         }
 
     @staticmethod

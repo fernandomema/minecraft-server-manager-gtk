@@ -87,6 +87,22 @@ class ServerController:
             if server.path == path:
                 return server
         return None
+
+    def get_logs_directory(self, server: MinecraftServer) -> str:
+        """Obtiene la ruta del directorio de logs para un servidor"""
+        return os.path.join(server.path, "logs")
+
+    def get_available_log_files(self, server: MinecraftServer) -> List[str]:
+        """Devuelve una lista de rutas de archivos de log disponibles"""
+        logs_dir = self.get_logs_directory(server)
+        if not os.path.isdir(logs_dir):
+            return []
+
+        log_files = []
+        for filename in sorted(os.listdir(logs_dir)):
+            if filename.endswith(".log") or filename.endswith(".log.gz"):
+                log_files.append(os.path.join(logs_dir, filename))
+        return log_files
     
     def is_server_running(self, server: MinecraftServer) -> bool:
         """Verifica si un servidor está ejecutándose"""

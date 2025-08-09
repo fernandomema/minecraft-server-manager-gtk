@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-09 12:33+0000\n"
+"POT-Creation-Date: 2025-08-09 15:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr ""
 msgid "<i>Select a server to view config files</i>"
 msgstr ""
 
-#: views/config_editor_page.py:81
+#: views/config_editor_page.py:81 views/log_viewer_page.py:64
 msgid "File"
 msgstr ""
 
@@ -45,7 +45,7 @@ msgstr ""
 msgid "<i>Select a configuration file to edit</i>"
 msgstr ""
 
-#: views/config_editor_page.py:145
+#: views/config_editor_page.py:145 views/log_viewer_page.py:98
 #, python-brace-format
 msgid "<b>Server:</b> {name}"
 msgstr ""
@@ -62,165 +62,194 @@ msgstr ""
 msgid "Properties"
 msgstr ""
 
-#: views/eula_dialog.py:19
-msgid "Minecraft EULA Agreement Required"
-msgstr ""
-
-#: views/eula_dialog.py:24
-#, python-brace-format
-msgid ""
-"To run the Minecraft server '{server_name}', you must agree to the Minecraft "
-"End User License Agreement (EULA). You can read the EULA at https://account."
-"mojang.com/documents/minecraft_eula. Do you accept the EULA?"
-msgstr ""
-
-#: views/ui_setup.py:109 views/main_window.py:183 views/main_window.py:237
-msgid "-- Add New Server --"
-msgstr ""
-
-#: views/ui_setup.py:115
-msgid "Start"
-msgstr ""
-
-#: views/ui_setup.py:119
-msgid "Stop"
-msgstr ""
-
-#: views/ui_setup.py:123
-msgid "Kill"
-msgstr ""
-
-#: views/ui_setup.py:149 views/main_window.py:162
-msgid "Server Management"
-msgstr ""
-
-#: views/ui_setup.py:150 views/main_window.py:164
-msgid "Plugin Manager"
-msgstr ""
-
-#: views/ui_setup.py:151 views/main_window.py:166
-msgid "Config Editor"
-msgstr ""
-
-#: views/main_window.py:25
+#: views/main_window.py:27
 msgid "Minecraft Server Manager"
 msgstr ""
 
-#: views/main_window.py:173
+#: views/main_window.py:172 views/ui_setup.py:153
+msgid "Server Management"
+msgstr ""
+
+#: views/main_window.py:174 views/ui_setup.py:154
+msgid "Plugin Manager"
+msgstr ""
+
+#: views/main_window.py:176 views/ui_setup.py:155
+msgid "Config Editor"
+msgstr ""
+
+#: views/main_window.py:178 views/ui_setup.py:156
+msgid "Port Analyzer"
+msgstr ""
+
+#: views/main_window.py:180 views/ui_setup.py:157
+msgid "Logs"
+msgstr ""
+
+#: views/main_window.py:187
 msgid "Welcome to the Minecraft Server Manager console!\n"
 msgstr ""
 
-#: views/main_window.py:174
+#: views/main_window.py:188
 msgid "Server output will appear here.\n"
+msgstr ""
+
+#: views/main_window.py:197 views/main_window.py:253 views/ui_setup.py:113
+msgid "-- Add New Server --"
 msgstr ""
 
 #: views/plugin_management_page.py:79
 msgid "<b>Plugin Manager</b>"
 msgstr ""
 
-#: views/plugin_management_page.py:85 views/plugin_management_page.py:525
+#: views/plugin_management_page.py:85 views/plugin_management_page.py:542
 msgid "Select a server to manage plugins."
 msgstr ""
 
-#: views/plugin_management_page.py:148
+#: views/plugin_management_page.py:165
 msgid "Local Plugins/Mods"
 msgstr ""
 
-#: views/plugin_management_page.py:160 views/plugin_management_page.py:244
+#: views/plugin_management_page.py:177 views/plugin_management_page.py:261
 msgid "Icon"
 msgstr ""
 
-#: views/plugin_management_page.py:167 views/plugin_management_page.py:250
+#: views/plugin_management_page.py:184 views/plugin_management_page.py:267
 msgid "Type"
 msgstr ""
 
-#: views/plugin_management_page.py:173
+#: views/plugin_management_page.py:190
 msgid "Plugin/Mod Name"
 msgstr ""
 
-#: views/plugin_management_page.py:179
+#: views/plugin_management_page.py:196
 msgid "Install Method"
 msgstr ""
 
-#: views/plugin_management_page.py:193
+#: views/plugin_management_page.py:210
 msgid "Add Local Plugin"
 msgstr ""
 
-#: views/plugin_management_page.py:197
+#: views/plugin_management_page.py:214
 msgid "Remove Selected"
 msgstr ""
 
-#: views/plugin_management_page.py:201
+#: views/plugin_management_page.py:218
 msgid "Update Selected"
 msgstr ""
 
-#: views/plugin_management_page.py:207
+#: views/plugin_management_page.py:224
 msgid "Online Search"
 msgstr ""
 
-#: views/plugin_management_page.py:218
+#: views/plugin_management_page.py:235
 msgid "Search for:"
 msgstr ""
 
-#: views/plugin_management_page.py:222
+#: views/plugin_management_page.py:239
 msgid "Plugins"
 msgstr ""
 
-#: views/plugin_management_page.py:223
+#: views/plugin_management_page.py:240
 msgid "Mods"
 msgstr ""
 
-#: views/plugin_management_page.py:224
+#: views/plugin_management_page.py:241
 msgid "Both"
 msgstr ""
 
-#: views/plugin_management_page.py:230 views/plugin_management_page.py:351
+#: views/plugin_management_page.py:247 views/plugin_management_page.py:368
 msgid "Search plugins/mods..."
 msgstr ""
 
-#: views/plugin_management_page.py:234
+#: views/plugin_management_page.py:251
 msgid "Search Online"
 msgstr ""
 
-#: views/plugin_management_page.py:250
+#: views/plugin_management_page.py:267
 msgid "Name"
 msgstr ""
 
-#: views/plugin_management_page.py:250
+#: views/plugin_management_page.py:267
 msgid "Source"
 msgstr ""
 
-#: views/plugin_management_page.py:250
+#: views/plugin_management_page.py:267
 msgid "Version"
 msgstr ""
 
-#: views/plugin_management_page.py:270
+#: views/plugin_management_page.py:287
 msgid "Download Selected"
 msgstr ""
 
-#: views/plugin_management_page.py:274
+#: views/plugin_management_page.py:291
 msgid "View Info"
 msgstr ""
 
-#: views/plugin_management_page.py:286
+#: views/plugin_management_page.py:303
 msgid "Select Plugin JAR File"
 msgstr ""
 
-#: views/plugin_management_page.py:297
+#: views/plugin_management_page.py:314
 msgid "JAR files"
 msgstr ""
 
-#: views/plugin_management_page.py:347
+#: views/plugin_management_page.py:364
 msgid "Search plugins..."
 msgstr ""
 
-#: views/plugin_management_page.py:349
+#: views/plugin_management_page.py:366
 msgid "Search mods..."
 msgstr ""
 
-#: views/plugin_management_page.py:523
+#: views/plugin_management_page.py:540
 #, python-brace-format
 msgid "Managing plugins for: {name}"
+msgstr ""
+
+#: views/log_viewer_page.py:39
+msgid "Log Files"
+msgstr ""
+
+#: views/log_viewer_page.py:51 views/log_viewer_page.py:101
+msgid "<i>Select a server to view logs</i>"
+msgstr ""
+
+#: views/log_viewer_page.py:71
+msgid "Log Content"
+msgstr ""
+
+#: views/log_viewer_page.py:138
+#, python-brace-format
+msgid "Error reading log file: {error}"
+msgstr ""
+
+#: views/add_server_dialog.py:17
+msgid "Add New Minecraft Server"
+msgstr ""
+
+#: views/add_server_dialog.py:32 views/server_management_page.py:89
+msgid "Server Name:"
+msgstr ""
+
+#: views/add_server_dialog.py:38
+msgid "Server Directory:"
+msgstr ""
+
+#: views/add_server_dialog.py:42
+msgid "Browse..."
+msgstr ""
+
+#: views/add_server_dialog.py:53
+msgid "Server JAR File:"
+msgstr ""
+
+#: views/add_server_dialog.py:55 views/add_server_dialog.py:83
+msgid "DOWNLOAD_LATER"
+msgstr ""
+
+#: views/add_server_dialog.py:66
+msgid "Select Server Directory"
 msgstr ""
 
 #: views/server_management_page.py:50
@@ -233,10 +262,6 @@ msgstr ""
 
 #: views/server_management_page.py:78
 msgid "<i>Select a server from the title bar to configure</i>"
-msgstr ""
-
-#: views/server_management_page.py:89 views/add_server_dialog.py:32
-msgid "Server Name:"
 msgstr ""
 
 #: views/server_management_page.py:99
@@ -278,28 +303,69 @@ msgid ""
 "files from your disk. The server data will remain intact."
 msgstr ""
 
-#: views/add_server_dialog.py:17
-msgid "Add New Minecraft Server"
+#: views/port_analysis_page.py:38
+msgid "<b>Port Analyzer</b>"
 msgstr ""
 
-#: views/add_server_dialog.py:38
-msgid "Server Directory:"
+#: views/port_analysis_page.py:43
+msgid "Refresh Ports"
 msgstr ""
 
-#: views/add_server_dialog.py:42
-msgid "Browse..."
+#: views/port_analysis_page.py:53
+msgid "Proto"
 msgstr ""
 
-#: views/add_server_dialog.py:53
-msgid "Server JAR File:"
+#: views/port_analysis_page.py:53
+msgid "State"
 msgstr ""
 
-#: views/add_server_dialog.py:55 views/add_server_dialog.py:83
-msgid "DOWNLOAD_LATER"
+#: views/port_analysis_page.py:53
+msgid "Local"
 msgstr ""
 
-#: views/add_server_dialog.py:66
-msgid "Select Server Directory"
+#: views/port_analysis_page.py:53
+msgid "Remote"
+msgstr ""
+
+#: views/port_analysis_page.py:53
+msgid "PID"
+msgstr ""
+
+#: views/port_analysis_page.py:53
+msgid "Program"
+msgstr ""
+
+#: views/port_analysis_page.py:80
+msgid "Selected server '{}' is not running."
+msgstr ""
+
+#: views/port_analysis_page.py:88
+msgid "No servers are currently running."
+msgstr ""
+
+#: views/port_analysis_page.py:114
+msgid "No listening ports found{}."
+msgstr ""
+
+#: views/port_analysis_page.py:116
+msgid "Found {} listening ports{}."
+msgstr ""
+
+#: views/port_analysis_page.py:118
+#, python-brace-format
+msgid "Failed to retrieve ports: {error}"
+msgstr ""
+
+#: views/ui_setup.py:119
+msgid "Start"
+msgstr ""
+
+#: views/ui_setup.py:123
+msgid "Stop"
+msgstr ""
+
+#: views/ui_setup.py:127
+msgid "Kill"
 msgstr ""
 
 #: views/download_server_dialog.py:16
@@ -336,4 +402,16 @@ msgstr ""
 
 #: views/download_server_dialog.py:80
 msgid "No versions found."
+msgstr ""
+
+#: views/eula_dialog.py:19
+msgid "Minecraft EULA Agreement Required"
+msgstr ""
+
+#: views/eula_dialog.py:24
+#, python-brace-format
+msgid ""
+"To run the Minecraft server '{server_name}', you must agree to the Minecraft "
+"End User License Agreement (EULA). You can read the EULA at https://account."
+"mojang.com/documents/minecraft_eula. Do you accept the EULA?"
 msgstr ""

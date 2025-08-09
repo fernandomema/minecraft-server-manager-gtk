@@ -17,6 +17,14 @@ class PortAnalysisPage:
         self.liststore = None
         self.status_label = None
         self.server_controller = server_controller
+        self.selected_server = None
+
+    def select_server(self, server):
+        """Selecciona un servidor para análisis de puertos"""
+        self.selected_server = server
+        # Refrescar la lista de puertos cuando se selecciona un servidor
+        if hasattr(self, 'liststore') and self.liststore:
+            self._refresh_ports()
 
     def create_page(self):
         """Creates the port analysis page."""
@@ -65,10 +73,21 @@ class PortAnalysisPage:
         self.liststore.clear()
         self.status_label.set_text("")
 
-        pids = [proc.pid for proc in self.server_controller.running_servers.values() if proc and proc.pid]
-        if not pids:
-            self.status_label.set_text(_("No servers are currently running."))
-            return
+        # Si hay un servidor seleccionado, mostrar solo sus puertos
+        if self.selected_server:
+            proc = self.server_controller.running_servers.get(self.selected_server.path)
+            if not proc or not proc.pid:
+                self.status_label.set_text(_("Selected server '{}' is not running.").format(self.selected_server.name))
+                return
+            pids = [proc.pid]
+            server_info = f" for server '{self.selected_server.name}'"
+        else:
+            # Mostrar puertos de todos los servidores en ejecución
+            pids = [proc.pid for proc in self.server_controller.running_servers.values() if proc and proc.pid]
+            if not pids:
+                self.status_label.set_text(_("No servers are currently running."))
+                return
+            server_info = ""
 
         try:
             output = subprocess.check_output(["ss", "-tulpn"], stderr=subprocess.STDOUT, text=True)
@@ -92,7 +111,9 @@ class PortAnalysisPage:
                 self.liststore.append([proto, state, local, remote, pid, program])
 
             if len(self.liststore) == 0:
-                self.status_label.set_text(_("No listening ports found for running servers."))
+                self.status_label.set_text(_("No listening ports found{}.").format(server_info))
+            else:
+                self.status_label.set_text(_("Found {} listening ports{}.").format(len(self.liststore), server_info))
         except Exception as e:
             self.status_label.set_text(_("Failed to retrieve ports: {error}").format(error=str(e)))
 
