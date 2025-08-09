@@ -233,7 +233,7 @@ class PluginManagementPage:
         search_hbox.pack_start(search_button, False, False, 0)
 
         # Lista de resultados con iconos y descripción
-        self.online_search_store = Gtk.ListStore(str, str, str, str, str, str)  # type, name, source, version, description, icon_url
+        self.online_search_store = Gtk.ListStore(str, str, str, str, str, str, str)  # type, name, source, version, description, icon_url, project_id
         self.online_search_view = Gtk.TreeView(model=self.online_search_store)
         
         # Columna de icono
@@ -365,26 +365,58 @@ class PluginManagementPage:
         plugin_source = model[treeiter][2]
         plugin_version = model[treeiter][3]
         
+        # Obtener el project_id de forma segura
+        try:
+            project_id = model[treeiter][6]
+        except (IndexError, TypeError):
+            project_id = ""
+        
+        if not project_id:
+            self.console_manager.log_to_console("Error: No project ID available for download.\n")
+            return
+        
         self.console_manager.log_to_console(f"Starting download of {plugin_name} from {plugin_source}...\n")
         
-        # Por ahora, mostrar un mensaje indicando que se está trabajando en esta funcionalidad
-        dialog = Gtk.MessageDialog(
-            parent=self.parent_window,
-            flags=Gtk.DialogFlags.MODAL,
-            message_type=Gtk.MessageType.INFO,
-            buttons=Gtk.ButtonsType.OK,
-            text="Download Functionality"
+        # Callback para manejar el resultado de la descarga
+        def download_callback(success, message):
+            if success:
+                self.console_manager.log_to_console(f"✓ {message}\n")
+                # Refrescar la lista de plugins locales
+                self.plugin_controller.refresh_local_plugins(self.selected_server.path)
+                
+                # Mostrar diálogo de éxito
+                dialog = Gtk.MessageDialog(
+                    parent=self.parent_window,
+                    flags=Gtk.DialogFlags.MODAL,
+                    message_type=Gtk.MessageType.INFO,
+                    buttons=Gtk.ButtonsType.OK,
+                    text="Download Successful"
+                )
+                dialog.format_secondary_text(f"{plugin_name} has been successfully downloaded and installed!")
+                dialog.run()
+                dialog.destroy()
+            else:
+                self.console_manager.log_to_console(f"✗ Download failed: {message}\n")
+                
+                # Mostrar diálogo de error
+                dialog = Gtk.MessageDialog(
+                    parent=self.parent_window,
+                    flags=Gtk.DialogFlags.MODAL,
+                    message_type=Gtk.MessageType.ERROR,
+                    buttons=Gtk.ButtonsType.OK,
+                    text="Download Failed"
+                )
+                dialog.format_secondary_text(f"Failed to download {plugin_name}:\n{message}")
+                dialog.run()
+                dialog.destroy()
+        
+        # Iniciar descarga
+        self.plugin_controller.download_modrinth_plugin(
+            plugin_name, 
+            project_id, 
+            self.selected_server.path, 
+            download_callback
         )
-        dialog.format_secondary_text(
-            f"Download functionality for {plugin_name} is coming soon!\n\n"
-            f"Plugin: {plugin_name}\n"
-            f"Source: {plugin_source}\n"
-            f"Version: {plugin_version}\n"
-            f"Type: {plugin_type.title()}\n\n"
-            "For now, please download manually and use 'Add Local Plugin'."
-        )
-        dialog.run()
-        dialog.destroy()
 
     def _on_update_local_plugin_clicked(self, widget):
         """Maneja el clic en actualizar plugin local"""
@@ -512,19 +544,21 @@ class PluginManagementPage:
             for plugin in plugins:
                 # Determinar tipo basado en categorías de Modrinth
                 plugin_type = getattr(plugin, 'project_type', 'plugin')  # Default a plugin
+                plugin_type_display = plugin_type.capitalize()  # Capitalizar para mostrar (Mod, Plugin)
                 description = getattr(plugin, 'description', 'No description available')
                 icon_url = getattr(plugin, 'icon_url', '')
+                project_id = getattr(plugin, 'project_id', '')
                 
                 row_data = [
-                    plugin_type, 
+                    plugin_type_display,  # Mostrar con mayúscula inicial
                     plugin.name, 
                     plugin.source, 
                     plugin.version,
                     description,
-                    icon_url
+                    icon_url,
+                    project_id
                 ]
                 
-                print(f"DEBUG: Adding row: {row_data}")
                 self.online_search_store.append(row_data)
                 
                 # Iniciar descarga de icono inmediatamente si hay URL
@@ -535,8 +569,6 @@ class PluginManagementPage:
         """Precarga un icono para que esté disponible inmediatamente"""
         def download_icon():
             try:
-                print(f"DEBUG: Preloading icon for {plugin_name} from {icon_url}")
-                
                 # Crear un directorio temporal para los iconos
                 temp_dir = os.path.join(tempfile.gettempdir(), "minecraft_server_manager_icons")
                 os.makedirs(temp_dir, exist_ok=True)
@@ -561,7 +593,6 @@ class PluginManagementPage:
                 os.remove(filename)
                 
             except Exception as e:
-                print(f"DEBUG: Error preloading icon for {plugin_name}: {e}")
                 # En caso de error, usar icono por defecto
                 default_icon = self.default_plugin_icon if plugin_type == "plugin" else self.default_mod_icon
                 self.icon_cache[icon_url] = default_icon

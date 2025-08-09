@@ -50,7 +50,7 @@ class PluginController:
         try:
             return save_json_file(metadata_file, metadata)
         except Exception as e:
-            self._log(f"Error saving plugin metadata: {e}\n")
+            GLib.idle_add(self._log, f"Error saving plugin metadata: {e}\n")
             return False
     
     def _add_plugin_metadata(self, server_path: str, plugin_name: str, install_method: str, project_id: Optional[str] = None):
@@ -111,12 +111,13 @@ class PluginController:
         """
         def perform_search():
             try:
-                print(f"DEBUG: Starting Modrinth search for '{query}' (type: {search_type or 'both'})")
-                
                 encoded_query = urllib.parse.quote(query)
                 url = f"{MODRINTH_API_BASE_URL}/search?query={encoded_query}"
                 
-                print(f"DEBUG: Modrinth API URL: {url}")
+                # Agregar facets para filtrar por tipo de proyecto si se especifica
+                if search_type in ["plugin", "mod"]:
+                    facet = urllib.parse.quote(f'[["project_type:{search_type}"]]')
+                    url += f"&facets={facet}"
                 
                 request = urllib.request.Request(url)
                 request.add_header('User-Agent', 'MinecraftServerManager/1.0')
@@ -124,63 +125,35 @@ class PluginController:
                 with urllib.request.urlopen(request) as response:
                     data = json.loads(response.read().decode())
                 
-                print(f"DEBUG: Received response from Modrinth API")
-                
                 plugins = []
                 if data and "hits" in data:
                     total_hits = len(data['hits'])
-                    print(f"DEBUG: Processing {total_hits} hits from API")
                     filtered_count = 0
                     
                     for hit in data["hits"]:
-                        # Debug: Mostrar el tipo de proyecto y categorías
+                        # Usar el atributo 'project_type' directamente de la respuesta
                         project_type = hit.get("project_type", "").lower()
-                        categories = hit.get("categories", [])
                         title = hit.get('title', 'Unknown')
+                        categories = hit.get("categories", [])
                         
-                        print(f"DEBUG: '{title}' - Type: '{project_type}', Categories: {categories}")
-                        
-                        # Determinar si es un plugin de servidor o mod
-                        server_categories = ["bukkit", "spigot", "paper", "purpur", "folia", "server", "management", "administration", "utility"]
-                        
-                        # Clasificación simplificada
-                        is_plugin_type = project_type == "plugin"
-                        has_server_categories = any(cat in server_categories for cat in categories)
-                        is_mod_type = project_type == "mod"
-                        is_modpack = project_type == "modpack"
-                        
-                        print(f"DEBUG: '{title}' - Type: {project_type}, Has server cats: {has_server_categories}")
-                        
-                        # Aplicar filtros basados en el tipo de búsqueda
-                        should_include = False
-                        final_type = "mod"  # default
-                        
-                        if search_type == "plugin":
-                            # Para búsqueda de plugins: incluir plugins reales o mods con categorías de servidor
-                            if is_plugin_type or (is_mod_type and has_server_categories):
-                                should_include = True
-                                final_type = "plugin"
-                        elif search_type == "mod":
-                            # Para búsqueda de mods: incluir mods que no sean específicamente de servidor
-                            if is_mod_type and not has_server_categories:
-                                should_include = True
-                                final_type = "mod"
-                        else:
-                            # Sin filtro: incluir todo excepto modpacks
-                            if not is_modpack:
-                                should_include = True
-                                final_type = "plugin" if (is_plugin_type or has_server_categories) else "mod"
-                        
-                        if not should_include:
-                            print(f"DEBUG: Skipping '{title}' - doesn't match search criteria")
+                        # Solo incluir mods y plugins, excluir modpacks y otros tipos
+                        if project_type not in ["mod", "plugin"]:
                             continue
+                        
+                        # Detectar plugins basándose en las categorías
+                        plugin_categories = ["spigot", "paper", "bukkit", "purpur", "waterfall", "velocity"]
+                        is_plugin = any(cat.lower() in plugin_categories for cat in categories)
+                        
+                        # Si tiene categorías de servidor, es un plugin, no un mod
+                        if is_plugin:
+                            project_type = "plugin"
                             
-                        print(f"DEBUG: Including '{title}' in results")
                         filtered_count += 1
                             
                         name = hit.get("title", "N/A")
                         description = hit.get("description", "")[:200] + "..." if len(hit.get("description", "")) > 200 else hit.get("description", "")
                         icon_url = hit.get("icon_url", "")
+                        project_id = hit.get("project_id", "") or hit.get("id", "")  # Obtener el ID del proyecto
                         version = "Latest"
                         if hit.get("versions"):
                             version = hit["versions"][0] if hit["versions"] else "Latest"
@@ -191,17 +164,17 @@ class PluginController:
                             version=version,
                             description=description
                         )
-                        # Añadir el tipo clasificado como atributo
-                        plugin.project_type = final_type
+                        # Usar el tipo de proyecto directamente de la API de Modrinth
+                        plugin.project_type = project_type
                         # Añadir la URL del icono como atributo
                         plugin.icon_url = icon_url
+                        # Añadir el ID del proyecto
+                        plugin.project_id = project_id
                         plugins.append(plugin)
                     
                     search_type_desc = search_type or 'both plugins and mods'
-                    print(f"DEBUG: Filtered {filtered_count} items from {total_hits} total hits (searching for {search_type_desc})")
                     GLib.idle_add(self._log, f"Found {len(plugins)} {search_type_desc} from Modrinth.\n")
                 else:
-                    print("DEBUG: No results found from Modrinth")
                     GLib.idle_add(self._log, "No results found from Modrinth.\n")
                 
                 GLib.idle_add(callback, plugins)
@@ -218,6 +191,104 @@ class PluginController:
         
         threading.Thread(target=perform_search, daemon=True).start()
     
+    def download_modrinth_plugin(self, plugin_name: str, project_id: str, server_path: str, callback: Callable[[bool, str], None]):
+        """Descarga un plugin desde Modrinth de forma asíncrona
+        
+        Args:
+            plugin_name: Nombre del plugin
+            project_id: ID del proyecto en Modrinth (extraído de la URL del icono o búsqueda)
+            server_path: Ruta del servidor donde instalar
+            callback: Función callback con (success: bool, message: str)
+        """
+        def perform_download():
+            try:
+                GLib.idle_add(self._log, f"Starting download of {plugin_name} from Modrinth...\n")
+                
+                # Obtener información del proyecto
+                project_url = f"{MODRINTH_API_BASE_URL}/project/{project_id}"
+                request = urllib.request.Request(project_url)
+                request.add_header('User-Agent', 'MinecraftServerManager/1.0')
+                
+                with urllib.request.urlopen(request) as response:
+                    project_data = json.loads(response.read().decode())
+                
+                # Obtener las versiones del proyecto
+                versions_url = f"{MODRINTH_API_BASE_URL}/project/{project_id}/version"
+                request = urllib.request.Request(versions_url)
+                request.add_header('User-Agent', 'MinecraftServerManager/1.0')
+                
+                with urllib.request.urlopen(request) as response:
+                    versions_data = json.loads(response.read().decode())
+                
+                if not versions_data:
+                    GLib.idle_add(callback, False, "No versions available for this plugin")
+                    return
+                
+                # Obtener la última versión compatible
+                latest_version = None
+                for version in versions_data:
+                    # Buscar versión compatible con el servidor (puedes filtrar por game_versions si es necesario)
+                    if version.get("files"):
+                        latest_version = version
+                        break
+                
+                if not latest_version:
+                    GLib.idle_add(callback, False, "No compatible version found")
+                    return
+                
+                # Obtener el archivo de descarga
+                download_file = latest_version["files"][0]  # Tomar el primer archivo
+                download_url = download_file["url"]
+                filename = download_file["filename"]
+                
+                # Crear directorio de plugins/mods según el tipo
+                project_type = project_data.get("project_type", "mod").lower()
+                categories = project_data.get("categories", [])
+                
+                # Verificar si hay información de loaders
+                loaders = project_data.get("loaders", [])
+                
+                # Detectar plugins basándose en las categorías O loaders
+                plugin_categories = ["spigot", "paper", "bukkit", "purpur", "waterfall", "velocity"]
+                plugin_loaders = ["bukkit", "spigot", "paper", "purpur", "waterfall", "velocity"]
+                
+                is_plugin_by_categories = any(cat.lower() in plugin_categories for cat in categories)
+                is_plugin_by_loaders = any(loader.lower() in plugin_loaders for loader in loaders)
+                is_plugin = is_plugin_by_categories or is_plugin_by_loaders
+                
+                # Si tiene categorías de servidor, es un plugin, no un mod
+                if is_plugin:
+                    project_type = "plugin"
+                
+                if project_type == "plugin":
+                    plugins_dir = os.path.join(server_path, "plugins")
+                else:
+                    plugins_dir = os.path.join(server_path, "mods")
+                
+                os.makedirs(plugins_dir, exist_ok=True)
+                
+                # Descargar el archivo
+                file_path = os.path.join(plugins_dir, filename)
+                urllib.request.urlretrieve(download_url, file_path)
+                
+                # Solo guardar metadatos, no agregar a la lista (se hará en refresh)
+                plugin_name_clean = os.path.splitext(filename)[0]
+                self._add_plugin_metadata(server_path, plugin_name_clean, "modrinth", project_id)
+                
+                GLib.idle_add(callback, True, f"Successfully downloaded {plugin_name}")
+                GLib.idle_add(self._log, f"Download completed: {filename}\n")
+                
+            except urllib.error.HTTPError as e:
+                error_msg = f"HTTP Error {e.code}: {e.reason}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+            except Exception as e:
+                error_msg = f"Download error: {str(e)}"
+                GLib.idle_add(callback, False, error_msg)
+                GLib.idle_add(self._log, f"Download failed: {error_msg}\n")
+        
+        threading.Thread(target=perform_download, daemon=True).start()
+
     def remove_local_plugin(self, plugin: Plugin, server_path: str = None) -> bool:
         """Elimina un plugin local"""
         if not plugin.is_local() or not plugin.file_path:
