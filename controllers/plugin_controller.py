@@ -57,7 +57,7 @@ class PluginController:
         """Añade metadatos para un plugin"""
         metadata = self._load_plugin_metadata(server_path)
         metadata[plugin_name] = {
-            "install_method": install_method,
+            "install_method": install_method.capitalize(),
             "project_id": project_id,
             "installed_at": __import__("datetime").datetime.now().isoformat()
         }
@@ -273,7 +273,7 @@ class PluginController:
                 
                 # Solo guardar metadatos, no agregar a la lista (se hará en refresh)
                 plugin_name_clean = os.path.splitext(filename)[0]
-                self._add_plugin_metadata(server_path, plugin_name_clean, "modrinth", project_id)
+                self._add_plugin_metadata(server_path, plugin_name_clean, "Modrinth", project_id)
                 
                 GLib.idle_add(callback, True, f"Successfully downloaded {plugin_name}")
                 GLib.idle_add(self._log, f"Download completed: {filename}\n")
