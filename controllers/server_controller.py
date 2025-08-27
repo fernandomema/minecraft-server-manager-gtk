@@ -59,13 +59,13 @@ class ServerController:
             self._log(f"Error saving servers: {e}\n")
             return False
     
-    def add_server(self, name: str, path: str, jar: str = "DOWNLOAD_LATER") -> bool:
+    def add_server(self, name: str, path: str, jar: str = "DOWNLOAD_LATER", java_path: str = "") -> bool:
         """Añade un nuevo servidor"""
         if not name or not path:
             self._log("Server name or path cannot be empty.\n")
             return False
-        
-        server = MinecraftServer(name, path, jar)
+
+        server = MinecraftServer(name, path, jar, java_path=java_path)
         self.servers.append(server)
         self._log(f"Added server: {name} at {path} using {jar}\n")
         return self.save_servers()
@@ -130,17 +130,32 @@ class ServerController:
         try:
             self._log(f"Starting server '{server.name}' using {server.jar}...\n")
             
-            process = subprocess.Popen(
-                ["java", f"-Xmx{DEFAULT_JAVA_MEMORY}", f"-Xms{DEFAULT_JAVA_MEMORY}", 
-                 "-jar", server.jar] + DEFAULT_JAR_ARGS,
-                cwd=server.path,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-                universal_newlines=True
-            )
+            java_executable = server.java_path if getattr(server, 'java_path', '') else "java"
+            base_cmd = [java_executable, f"-Xmx{DEFAULT_JAVA_MEMORY}", f"-Xms{DEFAULT_JAVA_MEMORY}",
+                        "-jar", server.jar] + DEFAULT_JAR_ARGS
+
+            if os.environ.get("FLATPAK_ID"):
+                cmd = ["flatpak-spawn", "--host", "--directory", server.path] + base_cmd
+                process = subprocess.Popen(
+                    cmd,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
+            else:
+                process = subprocess.Popen(
+                    base_cmd,
+                    cwd=server.path,
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True
+                )
             
             self.running_servers[server.path] = process
             server.process = process

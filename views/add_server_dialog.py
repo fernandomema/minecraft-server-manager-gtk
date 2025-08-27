@@ -76,19 +76,8 @@ class AddServerDialog(Gtk.Dialog):
             parent=self,
             action=Gtk.FileChooserAction.SELECT_FOLDER,
         )
-
-        cancel_button = Gtk.Button(label=_("Cancel"))
-        cancel_button.set_image(Gtk.Image.new_from_icon_name("window-close", Gtk.IconSize.BUTTON))
-        cancel_button.set_always_show_image(True)
-        cancel_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.CANCEL))
-        dialog.add_action_widget(cancel_button, Gtk.ResponseType.CANCEL)
-
-        open_button = Gtk.Button(label=_("Open"))
-        open_button.set_image(Gtk.Image.new_from_icon_name("document-open", Gtk.IconSize.BUTTON))
-        open_button.set_always_show_image(True)
-        open_button.connect("clicked", lambda btn: dialog.response(Gtk.ResponseType.OK))
-        dialog.add_action_widget(open_button, Gtk.ResponseType.OK)
-        
+        dialog.add_button(_("Cancel"), Gtk.ResponseType.CANCEL)
+        dialog.add_button(_("Open"), Gtk.ResponseType.OK)
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
             self.dir_entry.set_text(dialog.get_filename())

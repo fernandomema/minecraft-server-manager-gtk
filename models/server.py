@@ -6,12 +6,14 @@ from typing import Optional, Dict, Any
 
 class MinecraftServer:
     def __init__(self, name: str, path: str, jar: str,
-                 resource_pack: str = "", resource_pack_sha1: str = ""):
+                 resource_pack: str = "", resource_pack_sha1: str = "",
+                 java_path: str = ""):
         self.name = name
         self.path = path
         self.jar = jar
         self.resource_pack = resource_pack
         self.resource_pack_sha1 = resource_pack_sha1
+        self.java_path = java_path
         self.process = None
         self.is_running = False
     
@@ -22,7 +24,8 @@ class MinecraftServer:
             "path": self.path,
             "jar": self.jar,
             "resource_pack": self.resource_pack,
-            "resource_pack_sha1": self.resource_pack_sha1
+            "resource_pack_sha1": self.resource_pack_sha1,
+            "java_path": self.java_path
         }
     
     @classmethod
@@ -33,7 +36,8 @@ class MinecraftServer:
             path=data.get("path", ""),
             jar=data.get("jar", "DOWNLOAD_LATER"),
             resource_pack=data.get("resource_pack", ""),
-            resource_pack_sha1=data.get("resource_pack_sha1", "")
+            resource_pack_sha1=data.get("resource_pack_sha1", ""),
+            java_path=data.get("java_path", "")
         )
     
     def is_valid(self) -> bool:

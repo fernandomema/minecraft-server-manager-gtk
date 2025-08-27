@@ -14,6 +14,7 @@ from models.server import MinecraftServer
 from views.add_server_dialog import AddServerDialog
 from views.download_server_dialog import DownloadServerDialog
 from views.eula_dialog import EulaDialog
+from utils.java_utils import get_system_java_installations, open_java_download_page
 
 
 class ServerManagementPage:
@@ -31,9 +32,12 @@ class ServerManagementPage:
         self.server_name_entry = None
         self.server_path_entry = None
         self.server_jar_combo = None
+        self.java_combo = None
         self.download_jar_button = None
         self.save_config_button = None
         self.refresh_jars_button = None
+        self.refresh_java_button = None
+        self.install_java_button = None
         self.unlink_server_button = None
         self.delete_server_button = None
 
@@ -119,15 +123,29 @@ class ServerManagementPage:
         self.server_jar_combo = Gtk.ComboBoxText()
         self.server_jar_combo.set_sensitive(False)
         self.server_jar_combo.connect("changed", self._on_server_jar_changed)
-        
+
         config_grid.attach(jar_label, 0, 2, 1, 1)
         config_grid.attach(self.server_jar_combo, 1, 2, 1, 1)
-        
+
         # Botón para descargar JAR
         self.download_jar_button = Gtk.Button(label=_("Download JAR"))
         self.download_jar_button.set_sensitive(False)
         self.download_jar_button.connect("clicked", self._on_download_jar_clicked)
         config_grid.attach(self.download_jar_button, 2, 2, 1, 1)
+
+        # Java Executable
+        java_label = Gtk.Label(label=_("Java Executable:"))
+        java_label.set_halign(Gtk.Align.END)
+        self.java_combo = Gtk.ComboBoxText()
+        self.java_combo.set_sensitive(False)
+        self.java_combo.connect("changed", self._on_java_path_changed)
+        config_grid.attach(java_label, 0, 3, 1, 1)
+        config_grid.attach(self.java_combo, 1, 3, 1, 1)
+
+        self.refresh_java_button = Gtk.Button(label=_("Refresh"))
+        self.refresh_java_button.set_sensitive(False)
+        self.refresh_java_button.connect("clicked", self._on_refresh_java_clicked)
+        config_grid.attach(self.refresh_java_button, 2, 3, 1, 1)
         
         # Botones de acción
         action_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
@@ -143,6 +161,10 @@ class ServerManagementPage:
         self.refresh_jars_button.set_sensitive(False)
         self.refresh_jars_button.connect("clicked", self._on_refresh_jars_clicked)
         action_box.pack_start(self.refresh_jars_button, False, False, 0)
+
+        self.install_java_button = Gtk.Button(label=_("Install Java"))
+        self.install_java_button.connect("clicked", self._on_install_java_clicked)
+        action_box.pack_start(self.install_java_button, False, False, 0)
         
         # Separador
         separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
@@ -171,6 +193,11 @@ class ServerManagementPage:
 
     def _on_server_jar_changed(self, combo):
         """Maneja cambios en la selección del JAR"""
+        if self.selected_server:
+            self.save_config_button.set_sensitive(True)
+
+    def _on_java_path_changed(self, combo):
+        """Maneja cambios en la selección de Java"""
         if self.selected_server:
             self.save_config_button.set_sensitive(True)
 
@@ -215,6 +242,14 @@ class ServerManagementPage:
             self.server_controller.update_server_jar(self.selected_server, selected_jar)
             self.console_manager.log_to_console(f"Server JAR changed from '{old_jar}' to '{selected_jar}'\n")
 
+        selected_java = self.java_combo.get_active_text() if self.java_combo else ""
+        if selected_java and selected_java != getattr(self.selected_server, 'java_path', ''):
+            old_java = getattr(self.selected_server, 'java_path', '')
+            self.selected_server.java_path = selected_java
+            self.console_manager.log_to_console(
+                f"Java changed from '{old_java}' to '{selected_java}'\n"
+            )
+
         # Guardar cambios
         if self.server_controller.save_servers():
             self.console_manager.log_to_console("Server configuration saved successfully.\n")
@@ -230,6 +265,19 @@ class ServerManagementPage:
         if self.selected_server:
             self._update_jar_list()
             self.console_manager.log_to_console("JAR list refreshed.\n")
+
+    def _on_refresh_java_clicked(self, widget):
+        """Maneja el clic en refrescar versiones de Java"""
+        if self.selected_server:
+            self._update_java_list()
+            self.console_manager.log_to_console("Java list refreshed.\n")
+
+    def _on_install_java_clicked(self, widget):
+        """Abre la página de descarga de Java"""
+        if open_java_download_page():
+            self.console_manager.log_to_console("Opened Java download page.\n")
+        else:
+            self.console_manager.log_to_console("Unable to open Java download page.\n")
 
     def _on_unlink_server_clicked(self, widget):
         """Maneja el clic en desvincular servidor"""
@@ -440,16 +488,19 @@ class ServerManagementPage:
         # Actualizar campos
         self.server_name_entry.set_text(server.name)
         self.server_path_entry.set_text(server.path)
-        
+
         # Actualizar lista de JARs
         self._update_jar_list()
-        
+        self._update_java_list()
+
         # Habilitar controles
         self.server_name_entry.set_sensitive(True)
         self.server_jar_combo.set_sensitive(True)
+        self.java_combo.set_sensitive(True)
         self.download_jar_button.set_sensitive(True)
         self.save_config_button.set_sensitive(False)  # Solo si hay cambios
         self.refresh_jars_button.set_sensitive(True)
+        self.refresh_java_button.set_sensitive(True)
         self.unlink_server_button.set_sensitive(True)
         self.delete_server_button.set_sensitive(True)
 
@@ -462,13 +513,19 @@ class ServerManagementPage:
         self.server_name_entry.set_text("")
         self.server_path_entry.set_text("")
         self.server_jar_combo.remove_all()
-        
+        if self.java_combo:
+            self.java_combo.remove_all()
+
         # Deshabilitar controles
         self.server_name_entry.set_sensitive(False)
         self.server_jar_combo.set_sensitive(False)
+        if self.java_combo:
+            self.java_combo.set_sensitive(False)
         self.download_jar_button.set_sensitive(False)
         self.save_config_button.set_sensitive(False)
         self.refresh_jars_button.set_sensitive(False)
+        if self.refresh_java_button:
+            self.refresh_java_button.set_sensitive(False)
         self.unlink_server_button.set_sensitive(False)
         self.delete_server_button.set_sensitive(False)
 
@@ -498,6 +555,22 @@ class ServerManagementPage:
         else:
             # Si no se encuentra, seleccionar "DOWNLOAD_LATER"
             self.server_jar_combo.set_active(0)
+
+    def _update_java_list(self):
+        """Actualiza la lista de ejecutables de Java disponibles"""
+        if not self.java_combo:
+            return
+
+        self.java_combo.remove_all()
+        java_paths = get_system_java_installations()
+        for path in java_paths:
+            self.java_combo.append_text(path)
+
+        current_java = getattr(self.selected_server, 'java_path', '')
+        if current_java and current_java in java_paths:
+            self.java_combo.set_active(java_paths.index(current_java))
+        elif java_paths:
+            self.java_combo.set_active(0)
 
     def _check_and_handle_eula(self) -> bool:
         """Verifica y maneja el EULA si es necesario"""

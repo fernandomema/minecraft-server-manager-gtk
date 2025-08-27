@@ -12,6 +12,8 @@ finish-args:
   - --share=network
   # Filesystem access for server management
   - --filesystem=home
+  # Access system Java installations
+  - --filesystem=/usr/lib/jvm:ro
   # Allow spawning processes (for running servers)
   - --talk-name=org.freedesktop.Flatpak
 
