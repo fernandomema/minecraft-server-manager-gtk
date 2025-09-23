@@ -22,31 +22,40 @@ class ConsoleManager:
         self.text_tags = {}
         self.auto_scroll_enabled = True  # Auto-scroll siempre activo por defecto
         
-    def setup_console_view(self, container):
-        """Configura la vista de consola"""
+    def setup_console_view(self, container, command_callback=None):
+        """Configura la vista de consola con búsqueda y entrada de comandos"""
         self.console_buffer = Gtk.TextBuffer()
         self._setup_text_tags()
-        
         self.console_view = Gtk.TextView(buffer=self.console_buffer)
         self.console_view.set_editable(False)
         self.console_view.set_cursor_visible(False)
-
         self.console_scrolled_window = Gtk.ScrolledWindow()
         self.console_scrolled_window.set_hexpand(True)
         self.console_scrolled_window.set_vexpand(True)
         self.console_scrolled_window.add(self.console_view)
         container.pack_start(self.console_scrolled_window, True, True, 0)
-        
-        # Configurar auto-scroll
         self.console_adjustment = self.console_scrolled_window.get_vadjustment()
-        
-        # Configurar estilo DESPUÉS de crear todos los widgets
         self._setup_console_style()
-        
+
+        # Search box
+        self.search_entry = Gtk.Entry()
+        self.search_entry.set_placeholder_text(_("Search console output"))
+        self.search_entry.connect("changed", self._on_search_entry_changed)
+        container.pack_start(self.search_entry, False, False, 0)
+
+        # Command input box
+        self.command_entry = Gtk.Entry()
+        self.command_entry.set_placeholder_text(_("Type command and press Enter"))
+        self.command_entry.connect("activate", self._on_command_entry_activate)
+        container.pack_start(self.command_entry, False, False, 0)
+        self.command_callback = command_callback
+
         return {
             'console_buffer': self.console_buffer,
             'console_view': self.console_view,
-            'console_scrolled_window': self.console_scrolled_window
+            'console_scrolled_window': self.console_scrolled_window,
+            'search_entry': self.search_entry,
+            'command_entry': self.command_entry
         }
 
     def _setup_text_tags(self):
@@ -399,3 +408,24 @@ class ConsoleManager:
             end = self.console_buffer.get_end_iter()
             return self.console_buffer.get_text(start, end, False)
         return ""
+
+    def _on_search_entry_changed(self, entry):
+        """Filtra y resalta el texto de la consola según la búsqueda"""
+        query = entry.get_text().lower()
+        text = self.get_console_text().lower()
+        if not query:
+            self.console_view.set_buffer(self.console_buffer)
+            return
+        # Simple highlight: show only matching lines
+        lines = text.split('\n')
+        filtered = '\n'.join([l for l in lines if query in l])
+        temp_buffer = Gtk.TextBuffer()
+        temp_buffer.set_text(filtered)
+        self.console_view.set_buffer(temp_buffer)
+
+    def _on_command_entry_activate(self, entry):
+        """Envía el comando al servidor cuando se presiona Enter"""
+        command = entry.get_text()
+        if command and self.command_callback:
+            self.command_callback(command)
+        entry.set_text("")

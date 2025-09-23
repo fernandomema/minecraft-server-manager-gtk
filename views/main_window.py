@@ -59,7 +59,6 @@ class MinecraftServerManager(Gtk.Window):
 
     def _init_managers(self):
         """Inicializa los managers y páginas"""
-        # Console manager
         self.console_manager = ConsoleManager()
         
         # Pages
@@ -160,9 +159,7 @@ class MinecraftServerManager(Gtk.Window):
 
     def _setup_content_area(self, main_paned):
         """Configura el área de contenido principal"""
-        # Stack para cambiar entre páginas
         self.content_stack = UISetup.setup_content_stack(main_paned)
-        
         # Crear las páginas usando los nuevos managers
         server_page = self.server_management_page.create_page()
         plugin_page = self.plugin_management_page.create_page()
@@ -171,7 +168,8 @@ class MinecraftServerManager(Gtk.Window):
         config_page = self.config_editor_page.create_page()
         port_page = self.port_analysis_page.create_page()
         log_page = self.log_viewer_page.create_page()
-
+    # La consola será gestionada únicamente por la página de gestión de servidores para evitar duplicados
+        # Añadir las páginas al stack
         self.content_stack.add_named(server_page, "server_management")
         self.content_stack.add_named(plugin_page, "plugin_manager")
         self.content_stack.add_named(player_page, "player_management")
@@ -179,8 +177,6 @@ class MinecraftServerManager(Gtk.Window):
         self.content_stack.add_named(config_page, "config_editor")
         self.content_stack.add_named(port_page, "port_analyzer")
         self.content_stack.add_named(log_page, "log_viewer")
-        
-        # Ahora que todo está configurado, conectar la señal y hacer selección inicial
         self.sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
         self.sidebar_list.select_row(self.server_row)
         self.content_stack.set_visible_child_name("server_management")
@@ -313,3 +309,13 @@ class MinecraftServerManager(Gtk.Window):
     def _on_server_finished(self, server_path: str, exit_code: int):
         """Callback cuando un servidor termina"""
         self._update_header_buttons()
+
+    def _setup_console_view_with_command(self, container, *args, **kwargs):
+        return self.console_manager.setup_console_view(container, self._send_command_to_server)
+
+    def _send_command_to_server(self, command):
+        """Envía el comando al proceso del servidor seleccionado"""
+        if self.selected_server and self.server_controller.is_server_running(self.selected_server):
+            self.server_controller.send_command(self.selected_server, command)
+        else:
+            self.console_manager.log_to_console(_("No server running to send command."))

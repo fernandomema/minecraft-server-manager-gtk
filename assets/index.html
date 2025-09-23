@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Server Manager GTK - Manage Your Minecraft Servers with Ease</title>
+    <meta name="description" content="A comprehensive GTK-based application for managing Minecraft servers with plugin and mod support. Easy server creation, plugin management, and real-time console monitoring.">
+    <meta name="keywords" content="minecraft, server, management, bukkit, spigot, paper, plugins, mods, gtk, linux">
+    <meta name="author" content="Fernando Merino">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Minecraft Server Manager GTK">
+    <meta property="og:description" content="Manage Minecraft servers with ease - GTK-based application with plugin support">
+    <meta property="og:image" content="https://fernandomema.github.io/minecraft-server-manager-gtk/screenshots/server.png">
+    <meta property="og:url" content="https://fernandomema.github.io/minecraft-server-manager-gtk/">
+    <meta property="og:type" content="website">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Minecraft Server Manager GTK">
+    <meta name="twitter:description" content="Manage Minecraft servers with ease - GTK-based application with plugin support">
+    <meta name="twitter:image" content="https://fernandomema.github.io/minecraft-server-manager-gtk/screenshots/server.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        minecraft: {
+                            green: '#00D000',
+                            brown: '#8B4513',
+                            dark: '#1a1a1a',
+                            gray: '#2a2a2a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom styles -->
+    <style>
+        .minecraft-bg {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+        }
+        .hero-pattern {
+            background-image: 
+                radial-gradient(circle at 25% 25%, #00D000 2px, transparent 2px),
+                radial-gradient(circle at 75% 75%, #00D000 2px, transparent 2px);
+            background-size: 50px 50px;
+            background-position: 0 0, 25px 25px;
+            opacity: 0.1;
+        }
+        .feature-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 208, 0, 0.1);
+        }
+        .screenshot-container {
+            transition: transform 0.3s ease;
+        }
+        .screenshot-container:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full bg-gray-900/95 backdrop-blur-sm z-50 border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="../io.github.fernandomema.minecraft-server-manager-gtk-64.png" alt="Minecraft Server Manager GTK" class="w-8 h-8">
+                    <span class="text-xl font-bold text-minecraft-green">Minecraft Server Manager GTK</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#features" class="hover:text-minecraft-green transition-colors">Features</a>
+                    <a href="#screenshots" class="hover:text-minecraft-green transition-colors">Screenshots</a>
+                    <a href="#download" class="hover:text-minecraft-green transition-colors">Download</a>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk" target="_blank" class="hover:text-minecraft-green transition-colors">
+                        <i class="fab fa-github"></i> GitHub
+                    </a>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-white hover:text-minecraft-green">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- Mobile menu -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4">
+                <div class="flex flex-col space-y-3">
+                    <a href="#features" class="hover:text-minecraft-green transition-colors">Features</a>
+                    <a href="#screenshots" class="hover:text-minecraft-green transition-colors">Screenshots</a>
+                    <a href="#download" class="hover:text-minecraft-green transition-colors">Download</a>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk" target="_blank" class="hover:text-minecraft-green transition-colors">
+                        <i class="fab fa-github"></i> GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-20 pb-16 minecraft-bg overflow-hidden">
+        <div class="hero-pattern absolute inset-0"></div>
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center max-w-4xl mx-auto">
+                <div class="mb-8">
+                    <img src="../io.github.fernandomema.minecraft-server-manager-gtk-128.png" alt="Minecraft Server Manager GTK" class="w-32 h-32 mx-auto mb-6">
+                </div>
+                <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                    Minecraft Server Manager
+                    <span class="text-minecraft-green">GTK</span>
+                </h1>
+                <p class="text-xl md:text-2xl text-gray-300 mb-8 leading-relaxed">
+                    A comprehensive GTK-based application for managing Minecraft servers with plugin and mod support. 
+                    Create, configure, and monitor your servers with ease.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#download" class="bg-minecraft-green hover:bg-green-600 text-black font-bold py-4 px-8 rounded-lg transition-colors inline-flex items-center justify-center">
+                        <i class="fas fa-download mr-2"></i>
+                        Download Now
+                    </a>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk" target="_blank" class="border-2 border-minecraft-green text-minecraft-green hover:bg-minecraft-green hover:text-black font-bold py-4 px-8 rounded-lg transition-colors inline-flex items-center justify-center">
+                        <i class="fab fa-github mr-2"></i>
+                        View on GitHub
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    Powerful <span class="text-minecraft-green">Features</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Everything you need to manage your Minecraft servers efficiently and effectively
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Server Management -->
+                <div class="feature-card bg-gray-900 p-8 rounded-xl border border-gray-700">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-server"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Server Management</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Create, start, stop, and configure Minecraft servers with an intuitive interface. 
+                        Support for Paper, Spigot, Bukkit, and other server types.
+                    </p>
+                </div>
+
+                <!-- Plugin & Mod Management -->
+                <div class="feature-card bg-gray-900 p-8 rounded-xl border border-gray-700">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-puzzle-piece"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Plugin & Mod Management</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Browse, download, and manage plugins from Modrinth, Spigot, and CurseForge. 
+                        Smart search with type detection and visual icons.
+                    </p>
+                </div>
+
+                <!-- Colorized Console -->
+                <div class="feature-card bg-gray-900 p-8 rounded-xl border border-gray-700">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-terminal"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Colorized Console</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Real-time server output with syntax highlighting and auto-scrolling. 
+                        Dark theme for better readability during long monitoring sessions.
+                    </p>
+                </div>
+
+                <!-- Configuration Editor -->
+                <div class="feature-card bg-gray-900 p-8 rounded-xl border border-gray-700">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Configuration Editor</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Visual editor for YAML/YML server configuration files. 
+                        Easy-to-use interface for modifying server settings without manual file editing.
+                    </p>
+                </div>
+
+                <!-- Java Version Picker -->
+                <div class="feature-card bg-gray-900 p-8 rounded-xl border border-gray-700">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fab fa-java"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Java Version Picker</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Choose from installed Java versions and access download pages if needed. 
+                        Ensures compatibility with different Minecraft server versions.
+                    </p>
+                </div>
+
+                <!-- Automatic Downloads -->
+                <div class="feature-card bg-gray-900 p-8 rounded-xl border border-gray-700">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Automatic Downloads</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Download server JARs and plugins with ease. 
+                        Metadata tracking for installation methods and sources.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screenshots Section -->
+    <section id="screenshots" class="py-20 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    See It In <span class="text-minecraft-green">Action</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Get a glimpse of the intuitive interface and powerful features
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Server Management Screenshot -->
+                <div class="screenshot-container">
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <img src="./screenshots/server.png" alt="Server Management Interface" class="w-full rounded-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">Server Management</h3>
+                        <p class="text-gray-400">Comprehensive server administration interface</p>
+                    </div>
+                </div>
+
+                <!-- Plugin Management Screenshot -->
+                <div class="screenshot-container">
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <img src="./screenshots/plugins.png" alt="Plugin Management with Modrinth Integration" class="w-full rounded-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">Plugin Management</h3>
+                        <p class="text-gray-400">Browse and install plugins from multiple sources</p>
+                    </div>
+                </div>
+
+                <!-- Configuration Editor Screenshot -->
+                <div class="screenshot-container">
+                    <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
+                        <img src="./screenshots/configs.png" alt="Configuration Editor" class="w-full rounded-lg mb-4">
+                        <h3 class="text-xl font-bold mb-2">Configuration Editor</h3>
+                        <p class="text-gray-400">Visual editor for server configuration files</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="py-20 bg-gray-800">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    Get <span class="text-minecraft-green">Started</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Choose your preferred installation method and start managing your Minecraft servers today
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Flathub -->
+                <div class="bg-gray-900 p-8 rounded-xl border border-gray-700 text-center">
+                    <div class="text-minecraft-green text-5xl mb-6">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Flathub</h3>
+                    <p class="text-gray-400 mb-6">Recommended installation method with automatic updates</p>
+                    <a href="https://flathub.org/apps/details/io.github.fernandomema.MinecraftServerManager" target="_blank" class="bg-minecraft-green hover:bg-green-600 text-black font-bold py-3 px-6 rounded-lg transition-colors inline-block">
+                        Install from Flathub
+                    </a>
+                    <div class="mt-4 text-sm text-gray-500">
+                        <code class="bg-gray-800 px-2 py-1 rounded">flatpak install flathub io.github.fernandomema.MinecraftServerManager</code>
+                    </div>
+                </div>
+
+                <!-- AppImage -->
+                <div class="bg-gray-900 p-8 rounded-xl border border-gray-700 text-center">
+                    <div class="text-minecraft-green text-5xl mb-6">
+                        <i class="fas fa-file-archive"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">AppImage</h3>
+                    <p class="text-gray-400 mb-6">Portable executable that runs on most Linux distributions</p>
+                    <a href="./builds/linux/minecraft-server-manager-gtk-x86_64.AppImage" target="_blank" class="bg-minecraft-green hover:bg-green-600 text-black font-bold py-3 px-6 rounded-lg transition-colors inline-block">
+                        Download AppImage
+                    </a>
+                    <div class="mt-4 text-sm text-gray-500">
+                        Self-extracting portable executable
+                    </div>
+                </div>
+
+                <!-- Source Code -->
+                <div class="bg-gray-900 p-8 rounded-xl border border-gray-700 text-center">
+                    <div class="text-minecraft-green text-5xl mb-6">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Source Code</h3>
+                    <p class="text-gray-400 mb-6">Clone the repository and run from source</p>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk" target="_blank" class="bg-minecraft-green hover:bg-green-600 text-black font-bold py-3 px-6 rounded-lg transition-colors inline-block">
+                        View on GitHub
+                    </a>
+                    <div class="mt-4 text-sm text-gray-500">
+                        <code class="bg-gray-800 px-2 py-1 rounded">git clone && python3 main.py</code>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Requirements -->
+            <div class="mt-16 bg-gray-900 p-8 rounded-xl border border-gray-700 max-w-4xl mx-auto">
+                <h3 class="text-2xl font-bold mb-6 text-center">System Requirements</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3 text-minecraft-green">Minimum Requirements</h4>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>Python 3.6+</li>
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>PyGObject (GTK 3.0)</li>
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>PyYAML</li>
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>Java 8+ (for running servers)</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3 text-minecraft-green">Supported Platforms</h4>
+                        <ul class="space-y-2 text-gray-400">
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>Ubuntu/Debian</li>
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>Fedora/Red Hat</li>
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>Arch Linux</li>
+                            <li><i class="fas fa-check text-minecraft-green mr-2"></i>Most Linux distributions</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section class="py-20 bg-gray-900">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">
+                    Need <span class="text-minecraft-green">Help?</span>
+                </h2>
+                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
+                    Get support, report issues, or contribute to the project
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Documentation -->
+                <div class="text-center">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Documentation</h3>
+                    <p class="text-gray-400 mb-4">Comprehensive guides and tutorials</p>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk#readme" target="_blank" class="text-minecraft-green hover:underline">
+                        Read the Docs
+                    </a>
+                </div>
+
+                <!-- Issues -->
+                <div class="text-center">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-bug"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Report Issues</h3>
+                    <p class="text-gray-400 mb-4">Found a bug or have a feature request?</p>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk/issues" target="_blank" class="text-minecraft-green hover:underline">
+                        GitHub Issues
+                    </a>
+                </div>
+
+                <!-- Contribute -->
+                <div class="text-center">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-code-branch"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Contribute</h3>
+                    <p class="text-gray-400 mb-4">Help improve the project</p>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk/pulls" target="_blank" class="text-minecraft-green hover:underline">
+                        Pull Requests
+                    </a>
+                </div>
+
+                <!-- Community -->
+                <div class="text-center">
+                    <div class="text-minecraft-green text-4xl mb-4">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Community</h3>
+                    <p class="text-gray-400 mb-4">Join the discussion</p>
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk/discussions" target="_blank" class="text-minecraft-green hover:underline">
+                        Discussions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 border-t border-gray-700 py-12">
+        <div class="container mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- About -->
+                <div>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <img src="../io.github.fernandomema.minecraft-server-manager-gtk-48.png" alt="Minecraft Server Manager GTK" class="w-8 h-8">
+                        <span class="text-xl font-bold text-minecraft-green">Minecraft Server Manager GTK</span>
+                    </div>
+                    <p class="text-gray-400 leading-relaxed">
+                        A comprehensive GTK-based application for managing Minecraft servers with plugin and mod support.
+                    </p>
+                </div>
+
+                <!-- Links -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#features" class="text-gray-400 hover:text-minecraft-green transition-colors">Features</a></li>
+                        <li><a href="#screenshots" class="text-gray-400 hover:text-minecraft-green transition-colors">Screenshots</a></li>
+                        <li><a href="#download" class="text-gray-400 hover:text-minecraft-green transition-colors">Download</a></li>
+                        <li><a href="https://github.com/fernandomema/minecraft-server-manager-gtk" target="_blank" class="text-gray-400 hover:text-minecraft-green transition-colors">GitHub Repository</a></li>
+                    </ul>
+                </div>
+
+                <!-- Developer -->
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Developer</h3>
+                    <p class="text-gray-400 mb-2">Fernando Merino</p>
+                    <div class="flex space-x-4">
+                        <a href="https://github.com/fernandomema" target="_blank" class="text-gray-400 hover:text-minecraft-green transition-colors">
+                            <i class="fab fa-github text-2xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
+                <p class="text-gray-400">
+                    © 2025 Fernando Merino. Licensed under the 
+                    <a href="https://github.com/fernandomema/minecraft-server-manager-gtk/blob/main/LICENSE" target="_blank" class="text-minecraft-green hover:underline">MIT License</a>.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript for mobile menu -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                    // Close mobile menu if open
+                    mobileMenu.classList.add('hidden');
+                }
+            });
+        });
+
+        // Add scroll effect to navigation
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 100) {
+                nav.classList.add('bg-gray-900');
+                nav.classList.remove('bg-gray-900/95');
+            } else {
+                nav.classList.remove('bg-gray-900');
+                nav.classList.add('bg-gray-900/95');
+            }
+        });
+    </script>
+</body>
+</html>

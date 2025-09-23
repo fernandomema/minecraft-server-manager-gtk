@@ -13,6 +13,9 @@ APP=io.github.fernandomema.minecraft-server-manager-gtk
 rm -rf "$APPDIR"
 rm -f *.AppImage
 
+# Create output directory
+mkdir -p assets/builds/linux
+
 # Create AppDir structure
 mkdir -p "$APPDIR/usr/bin"
 mkdir -p "$APPDIR/usr/share/applications"
@@ -79,7 +82,7 @@ cp io.github.fernandomema.minecraft-server-manager-gtk.svg "$APPDIR/"
 
 # Create a simple portable archive using tar and makeself-like approach
 echo "Creating portable AppImage archive..."
-APPIMAGE_NAME="minecraft-server-manager-gtk-x86_64.AppImage"
+APPIMAGE_NAME="assets/builds/linux/minecraft-server-manager-gtk-x86_64.AppImage"
 
 # Create a self-extracting script
 cat > "$APPIMAGE_NAME" << 'SELFEXTRACT_EOF'
