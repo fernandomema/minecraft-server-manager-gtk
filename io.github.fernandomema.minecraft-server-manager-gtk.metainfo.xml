@@ -20,15 +20,15 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/screenshots/server.png</image>
+      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/docs/screenshots/server.png</image>
       <caption>Server management interface</caption>
     </screenshot>
     <screenshot>
-      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/screenshots/plugins.png</image>
+      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/docs/screenshots/plugins.png</image>
       <caption>Plugin management with Modrinth integration</caption>
     </screenshot>
     <screenshot>
-      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/screenshots/configs.png</image>
+      <image>https://github.com/fernandomema/minecraft-server-manager-gtk/raw/main/docs/screenshots/configs.png</image>
       <caption>Configuration editor for server settings</caption>
     </screenshot>
   </screenshots>
