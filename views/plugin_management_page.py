@@ -9,6 +9,7 @@ from gi.repository import Gtk, GdkPixbuf, GLib
 import urllib.request
 import threading
 import os
+from utils.file_utils import reveal_in_file_manager
 import tempfile
 
 _ = gettext.gettext
@@ -231,6 +232,13 @@ class PluginManagementPage:
         update_button.connect("clicked", self._on_update_local_plugin_clicked)
         hbox.pack_start(update_button, False, False, 0)
 
+        # Nuevo: botón para revelar en el explorador de archivos
+        reveal_button = Gtk.Button(label=_("Show in File Manager"))
+        reveal_button.set_image(Gtk.Image.new_from_icon_name("folder-open", Gtk.IconSize.BUTTON))
+        reveal_button.set_always_show_image(True)
+        reveal_button.connect("clicked", self._on_reveal_plugin_in_file_manager_clicked)
+        hbox.pack_start(reveal_button, False, False, 0)
+
     def _setup_online_search_section(self, container):
         """Configura la sección de búsqueda online"""
         frame = Gtk.Frame(label=_("Online Search"))
@@ -384,6 +392,20 @@ class PluginManagementPage:
         plugin = Plugin(plugin_name, "Local", file_path=plugin_path, install_method=install_method)
         if self.plugin_controller.remove_local_plugin(plugin, self.selected_server.path):
             self.plugin_controller.refresh_local_plugins(self.selected_server.path)
+
+    def _on_reveal_plugin_in_file_manager_clicked(self, widget):
+        """Revela el archivo del plugin/mod seleccionado en el explorador de archivos"""
+        selection = self.local_plugin_view.get_selection()
+        model, treeiter = selection.get_selected()
+        if not treeiter:
+            self.console_manager.log_to_console("Please select a plugin to reveal.\n")
+            return
+        plugin_path = model[treeiter][5]  # La ruta está en el índice 5
+        if not plugin_path or not os.path.exists(plugin_path):
+            self.console_manager.log_to_console("Plugin file not found on disk.\n")
+            return
+        if not reveal_in_file_manager(plugin_path):
+            self.console_manager.log_to_console("Could not open file manager for this file.\n")
 
     def _on_search_online_clicked(self, widget):
         """Maneja el clic en buscar online"""

@@ -2,6 +2,8 @@
 import json
 import logging
 import os
+import shutil
+import subprocess
 from typing import Any, Dict, List, Union
 
 
@@ -74,3 +76,46 @@ def get_plugins_and_mods(server_path: str) -> List[tuple]:
                 items.append((filename, full_path))
     
     return items
+
+
+def reveal_in_file_manager(path: str) -> bool:
+    """Open the containing folder and (when supported) select the file in the user's file manager.
+    Returns True if a command to open the file manager was started, False otherwise.
+    """
+    if not os.path.exists(path):
+        return False
+    path = os.path.abspath(path)
+    # If path is a directory, open it directly; otherwise try to select the file
+    if os.path.isdir(path):
+        dirpath = path
+        target = None
+    else:
+        dirpath = os.path.dirname(path)
+        target = path
+
+    # Try file-manager specific commands that support selecting a file
+    fm_commands = [
+        ("nautilus", ["nautilus", "--select", path]),
+        ("dolphin", ["dolphin", "--select", path]),
+        ("nemo", ["nemo", "--browser", "--no-desktop", "--select", path]),
+        ("caja", ["caja", "--select", path]),
+        ("thunar", ["thunar", "--select", path]),
+    ]
+
+    for exe, cmd in fm_commands:
+        if shutil.which(exe):
+            try:
+                subprocess.Popen(cmd)
+                return True
+            except Exception:
+                continue
+
+    # Fallback: open containing folder with xdg-open
+    if shutil.which("xdg-open"):
+        try:
+            subprocess.Popen(["xdg-open", dirpath])
+            return True
+        except Exception:
+            return False
+
+    return False

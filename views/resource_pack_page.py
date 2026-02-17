@@ -5,6 +5,8 @@ import gi
 import gettext
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+import os
+from utils.file_utils import reveal_in_file_manager
 
 _ = gettext.gettext
 
@@ -78,6 +80,13 @@ class ResourcePackPage:
         deactivate_button.connect("clicked", self.on_deactivate_clicked)
         controls_box.pack_start(deactivate_button, False, False, 0)
 
+        # Botón para revelar el archivo en el explorador de archivos
+        show_button = Gtk.Button(label=_("Show in File Manager"))
+        show_button.set_image(Gtk.Image.new_from_icon_name("folder-open", Gtk.IconSize.BUTTON))
+        show_button.set_always_show_image(True)
+        show_button.connect("clicked", self.on_show_pack_in_file_manager)
+        controls_box.pack_start(show_button, False, False, 0)
+
         page.pack_start(controls_box, False, False, 0)
 
         return page
@@ -129,3 +138,20 @@ class ResourcePackPage:
             return
         self.resource_pack_controller.deactivate_resource_pack(self.selected_server)
         self.parent_window.server_controller.save_servers()
+
+    def on_show_pack_in_file_manager(self, widget):
+        """Abre el explorador de archivos y selecciona el resource pack elegido"""
+        if not self.selected_server:
+            return
+        selection = self.pack_view.get_selection()
+        model, treeiter = selection.get_selected()
+        if not treeiter:
+            return
+        filename = model[treeiter][0]
+        resource_dir = os.path.join(self.selected_server.path, "resourcepacks")
+        full_path = os.path.join(resource_dir, filename)
+        if not os.path.exists(full_path):
+            self.console_manager.log_to_console("Resource pack file not found.\n")
+            return
+        if not reveal_in_file_manager(full_path):
+            self.console_manager.log_to_console("Could not open file manager for this file.\n")
