@@ -24,7 +24,7 @@ from views.config_editor_page import ConfigEditorPage
 from views.log_viewer_page import LogViewerPage
 from views.port_analysis_page import PortAnalysisPage
 from views.about_dialog import AboutDialog
-from views.settings_dialog import SettingsDialog
+from views.settings_dialog import SettingsDialog, load_settings, save_settings
 from models.server import MinecraftServer
 from plugins.plugin_manager import AppPluginManager
 
@@ -36,20 +36,22 @@ class MinecraftServerManager(Gtk.Window):
 
         # Inicializar controladores
         self._init_controllers()
-        
+
         # Inicializar managers y pages
         self._init_managers()
-        
+
         # Variables de estado
         self.selected_server = None
-        
+        # Flag para evitar persistir la selección durante la carga inicial
+        self._suppress_last_server_persist = False
+
         # Configurar interfaz
         UISetup.setup_css()
         self._setup_ui()
-        
+
         # Cargar datos iniciales
         self._load_initial_data()
-        
+
         self.connect("destroy", Gtk.main_quit)
 
     def _init_controllers(self):
@@ -250,13 +252,37 @@ class MinecraftServerManager(Gtk.Window):
     def _load_initial_data(self):
         """Carga los datos iniciales"""
         self.server_controller.load_servers()
+        # Evitar persistir la selección que pueda dispararse al rellenar el selector
+        self._suppress_last_server_persist = True
         self._refresh_server_list()
+
+        # Restaurar la última selección de servidor si existe en la configuración
+        try:
+            cfg = load_settings()
+            last = cfg.get('last_server_name')
+            if last:
+                server = self.server_controller.find_server_by_name(last)
+                if server:
+                    # Seleccionar y actualizar header
+                    self._select_server(server)
+                    self._update_header_selector(last)
+        except Exception:
+            # No bloquear el arranque si ocurre algún error leyendo settings
+            pass
+        finally:
+            # Permitir persistir selecciones posteriores iniciadas por el usuario
+            self._suppress_last_server_persist = False
+
         self.console_manager.log_to_console(_("Welcome to the Minecraft Server Manager console!\n"))
         self.console_manager.log_to_console(_("Server output will appear here.\n"))
 
     # Event Handlers - delegated to page classes
     def _on_header_server_selected(self, combobox):
         """Maneja la selección de servidor en el header"""
+        # Si estamos en la carga inicial, ignorar eventos programáticos
+        if getattr(self, '_suppress_last_server_persist', False):
+            return
+
         selected_name = combobox.get_active_text()
         if not selected_name:
             return
@@ -274,6 +300,14 @@ class MinecraftServerManager(Gtk.Window):
         server = self.server_controller.find_server_by_name(selected_name)
         if server:
             self._select_server(server)
+            # Persistir la selección hecha por el usuario
+            try:
+                cfg = load_settings()
+                cfg['last_server_name'] = server.name if server else None
+                save_settings(cfg)
+                self.console_manager.log_to_console(f"[Settings] Saved last_server_name={cfg['last_server_name']}\n")
+            except Exception:
+                pass
 
     def _on_start_server_clicked(self, widget):
         """Maneja el clic en iniciar servidor"""
@@ -328,6 +362,7 @@ class MinecraftServerManager(Gtk.Window):
 
     def _refresh_server_list(self):
         """Refresca el selector de servidores del header"""
+        # Reconstruye la lista de servidores sin forzar una selección
         self.header_server_selector.remove_all()
         self.header_server_selector.append_text(_("-- Add New Server --"))
 
@@ -335,11 +370,9 @@ class MinecraftServerManager(Gtk.Window):
         for server in servers:
             self.header_server_selector.append_text(server.name)
 
-        if servers:
-            self.header_server_selector.set_active(1)  # Seleccionar primer servidor
-        else:
-            self.header_server_selector.set_active(0)
-
+        # Mantener la entrada por defecto (Add New Server) activa para evitar
+        # que una selección programática cargue el primer servidor.
+        self.header_server_selector.set_active(0)
     def _select_server_by_name(self, name: str):
         """Selecciona un servidor por nombre en el header selector"""
         # Buscar y seleccionar en el header selector
