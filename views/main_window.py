@@ -23,6 +23,8 @@ from views.resource_pack_page import ResourcePackPage
 from views.config_editor_page import ConfigEditorPage
 from views.log_viewer_page import LogViewerPage
 from views.port_analysis_page import PortAnalysisPage
+from views.about_dialog import AboutDialog
+from views.settings_dialog import SettingsDialog
 from models.server import MinecraftServer
 from plugins.plugin_manager import AppPluginManager
 
@@ -129,7 +131,10 @@ class MinecraftServerManager(Gtk.Window):
             'on_header_server_selected': self._on_header_server_selected,
             'on_start_server_clicked': self._on_start_server_clicked,
             'on_stop_server_clicked': self._on_stop_server_clicked,
-            'on_kill_server_clicked': self._on_kill_server_clicked
+            'on_kill_server_clicked': self._on_kill_server_clicked,
+            'on_settings_clicked': self._on_settings_clicked,
+            'on_about_clicked': self._on_about_clicked,
+            'on_quit_clicked': self._on_quit_clicked,
         }
         
         header_widgets = UISetup.setup_header_bar(self, header_callbacks)
@@ -369,3 +374,17 @@ class MinecraftServerManager(Gtk.Window):
             self.server_controller.send_command(self.selected_server, command)
         else:
             self.console_manager.log_to_console(_("No server running to send command."))
+
+    # ── Menu callbacks ─────────────────────────────────────────────────
+
+    def _on_settings_clicked(self, widget):
+        """Abre el diálogo de ajustes"""
+        SettingsDialog.run_dialog(self)
+
+    def _on_about_clicked(self, widget):
+        """Abre el diálogo About"""
+        AboutDialog.show(self)
+
+    def _on_quit_clicked(self, widget):
+        """Cierra la aplicación"""
+        Gtk.main_quit()

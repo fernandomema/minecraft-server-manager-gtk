@@ -108,36 +108,77 @@ class UISetup:
         header_bar.set_show_close_button(True)
         window.set_titlebar(header_bar)
 
-        # Server Selector
+        # Server Selector (center)
         header_server_selector = Gtk.ComboBoxText()
         header_server_selector.append_text(_("-- Add New Server --"))
         header_server_selector.set_active(0)
         header_server_selector.connect("changed", callbacks['on_header_server_selected'])
         header_bar.set_custom_title(header_server_selector)
 
-        # Control buttons
+        # Control buttons (LEFT side)
         buttons_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         buttons_box.get_style_context().add_class("linked")
 
         header_start_button = Gtk.Button.new_from_icon_name(
             "media-playback-start-symbolic", Gtk.IconSize.BUTTON
         )
+        header_start_button.set_tooltip_text(_("Start server"))
         header_start_button.connect("clicked", callbacks['on_start_server_clicked'])
         buttons_box.pack_start(header_start_button, False, False, 0)
 
         header_stop_button = Gtk.Button.new_from_icon_name(
             "media-playback-stop-symbolic", Gtk.IconSize.BUTTON
         )
+        header_stop_button.set_tooltip_text(_("Stop server"))
         header_stop_button.connect("clicked", callbacks['on_stop_server_clicked'])
         buttons_box.pack_start(header_stop_button, False, False, 0)
 
         header_kill_button = Gtk.Button.new_from_icon_name(
             "process-stop-symbolic", Gtk.IconSize.BUTTON
         )
+        header_kill_button.set_tooltip_text(_("Kill server"))
         header_kill_button.connect("clicked", callbacks['on_kill_server_clicked'])
         buttons_box.pack_start(header_kill_button, False, False, 0)
 
-        header_bar.pack_end(buttons_box)
+        header_bar.pack_start(buttons_box)
+
+        # Hamburger menu (RIGHT side)
+        menu_button = Gtk.MenuButton()
+        menu_button.set_image(
+            Gtk.Image.new_from_icon_name("open-menu-symbolic", Gtk.IconSize.BUTTON)
+        )
+        menu_button.set_tooltip_text(_("Menu"))
+
+        # Popover menu
+        popover = Gtk.Popover()
+        menu_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        menu_box.set_margin_top(6)
+        menu_box.set_margin_bottom(6)
+        menu_box.set_margin_start(6)
+        menu_box.set_margin_end(6)
+
+        settings_btn = Gtk.ModelButton(text=_("Settings"))
+        settings_btn.connect("clicked", callbacks['on_settings_clicked'])
+        menu_box.pack_start(settings_btn, False, False, 0)
+
+        about_btn = Gtk.ModelButton(text=_("About"))
+        about_btn.connect("clicked", callbacks['on_about_clicked'])
+        menu_box.pack_start(about_btn, False, False, 0)
+
+        sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        sep.set_margin_top(4)
+        sep.set_margin_bottom(4)
+        menu_box.pack_start(sep, False, False, 0)
+
+        quit_btn = Gtk.ModelButton(text=_("Quit"))
+        quit_btn.connect("clicked", callbacks['on_quit_clicked'])
+        menu_box.pack_start(quit_btn, False, False, 0)
+
+        menu_box.show_all()
+        popover.add(menu_box)
+        menu_button.set_popover(popover)
+
+        header_bar.pack_end(menu_button)
 
         return {
             'header_server_selector': header_server_selector,
