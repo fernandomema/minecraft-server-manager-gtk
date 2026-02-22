@@ -38,7 +38,7 @@ class PlayerController:
     def get_whitelist(self) -> List[str]:
         """Load whitelist entries"""
         path = self._get_file_path("whitelist.json")
-        if not path:
+        if not path or not os.path.exists(path):
             return []
         data = load_json_file(path)
         return [entry.get("name", "") for entry in data]
@@ -67,7 +67,7 @@ class PlayerController:
     def get_operators(self) -> List[str]:
         """Load operator entries"""
         path = self._get_file_path("ops.json")
-        if not path:
+        if not path or not os.path.exists(path):
             return []
         data = load_json_file(path)
         return [entry.get("name", "") for entry in data]
@@ -96,7 +96,7 @@ class PlayerController:
     def get_banned_players(self) -> List[str]:
         """Load banned players"""
         path = self._get_file_path("banned-players.json")
-        if not path:
+        if not path or not os.path.exists(path):
             return []
         data = load_json_file(path)
         return [entry.get("name", "") for entry in data]

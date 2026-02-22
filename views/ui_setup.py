@@ -147,7 +147,7 @@ class UISetup:
         }
 
     @staticmethod
-    def setup_sidebar(main_paned, callbacks):
+    def setup_sidebar(main_paned, callbacks, plugin_entries=None):
         """Configura la barra lateral izquierda"""
         # Contenedor de la barra lateral
         sidebar_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
@@ -177,13 +177,44 @@ class UISetup:
         sidebar_list.add(port_row)
         sidebar_list.add(logs_row)
 
+        # Add application plugin rows
+        plugin_rows = {}
+        if plugin_entries:
+            # Separator before plugins
+            sep_row = Gtk.ListBoxRow()
+            sep_row.set_selectable(False)
+            sep_row.set_activatable(False)
+            sep = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+            sep.set_margin_top(4)
+            sep.set_margin_bottom(4)
+            sep_row.add(sep)
+            sidebar_list.add(sep_row)
+
+            # Section header
+            header_row = Gtk.ListBoxRow()
+            header_row.set_selectable(False)
+            header_row.set_activatable(False)
+            header_label = Gtk.Label()
+            header_label.set_markup("<small><b>" + _("Plugins") + "</b></small>")
+            header_label.set_halign(Gtk.Align.START)
+            header_label.set_margin_start(12)
+            header_label.set_margin_top(4)
+            header_label.set_margin_bottom(2)
+            header_row.add(header_label)
+            sidebar_list.add(header_row)
+
+            for entry in plugin_entries:
+                row = UISetup.create_sidebar_row(entry['label'], entry['icon'])
+                sidebar_list.add(row)
+                plugin_rows[entry['id']] = row
+
         sidebar_box.pack_start(sidebar_list, True, True, 0)  # Asegurando que la lista ocupe espacio en el contenedor
 
         # Separador
         separator = Gtk.Separator(orientation=Gtk.Orientation.VERTICAL)
         main_paned.pack1(sidebar_box, False, False)  # Asegurando que la barra lateral se agregue al diseño principal
 
-        return {
+        result = {
             'sidebar_list': sidebar_list,
             'server_row': server_row,
             'plugin_row': plugin_row,
@@ -191,8 +222,10 @@ class UISetup:
             'resource_row': resource_row,
             'config_row': config_row,
             'port_row': port_row,
-            'logs_row': logs_row
+            'logs_row': logs_row,
+            'plugin_rows': plugin_rows,
         }
+        return result
 
     @staticmethod
     def setup_content_stack(main_paned):

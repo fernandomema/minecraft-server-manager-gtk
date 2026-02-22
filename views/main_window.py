@@ -24,6 +24,7 @@ from views.config_editor_page import ConfigEditorPage
 from views.log_viewer_page import LogViewerPage
 from views.port_analysis_page import PortAnalysisPage
 from models.server import MinecraftServer
+from plugins.plugin_manager import AppPluginManager
 
 
 class MinecraftServerManager(Gtk.Window):
@@ -57,6 +58,10 @@ class MinecraftServerManager(Gtk.Window):
         self.player_controller = PlayerController()
         self.resource_pack_controller = ResourcePackController()
 
+        # Plugin system
+        self.app_plugin_manager = AppPluginManager()
+        self.app_plugin_manager.discover_plugins()
+
     def _init_managers(self):
         """Inicializa los managers y páginas"""
         self.console_manager = ConsoleManager()
@@ -82,6 +87,9 @@ class MinecraftServerManager(Gtk.Window):
         
         # Configurar callbacks
         self._setup_callbacks()
+
+        # Activate application plugins
+        self.app_plugin_manager.activate_all(self, self.console_manager)
 
     def _setup_callbacks(self):
         """Configura los callbacks entre componentes"""
@@ -141,7 +149,18 @@ class MinecraftServerManager(Gtk.Window):
             'on_sidebar_selection_changed': self._on_sidebar_selection_changed
         }
         
-        sidebar_widgets = UISetup.setup_sidebar(main_paned, sidebar_callbacks)
+        # Collect plugin sidebar entries
+        plugin_entries = []
+        for plugin in self.app_plugin_manager.get_plugins():
+            plugin_entries.append({
+                'label': plugin.plugin_name,
+                'icon': plugin.plugin_icon,
+                'id': plugin.plugin_id,
+            })
+
+        sidebar_widgets = UISetup.setup_sidebar(
+            main_paned, sidebar_callbacks, plugin_entries=plugin_entries
+        )
 
         # Store references to widgets
         self.sidebar_list = sidebar_widgets['sidebar_list']
@@ -152,6 +171,7 @@ class MinecraftServerManager(Gtk.Window):
         self.config_row = sidebar_widgets['config_row']
         self.port_row = sidebar_widgets['port_row']
         self.logs_row = sidebar_widgets['logs_row']
+        self._plugin_sidebar_rows = sidebar_widgets.get('plugin_rows', {})
         
     def _create_sidebar_row(self, label_text, icon_name):
         """Crea una fila para la barra lateral - DEPRECATED, use UISetup.create_sidebar_row"""
@@ -177,6 +197,16 @@ class MinecraftServerManager(Gtk.Window):
         self.content_stack.add_named(config_page, "config_editor")
         self.content_stack.add_named(port_page, "port_analyzer")
         self.content_stack.add_named(log_page, "log_viewer")
+
+        # Add plugin pages
+        for app_plugin in self.app_plugin_manager.get_plugins():
+            try:
+                page_widget = app_plugin.create_page()
+                stack_name = f"plugin_{app_plugin.plugin_id}"
+                self.content_stack.add_named(page_widget, stack_name)
+            except Exception as e:
+                print(f"[PluginManager] Error creating page for {app_plugin.plugin_id}: {e}")
+
         self.sidebar_list.connect("row-selected", self._on_sidebar_selection_changed)
         self.sidebar_list.select_row(self.server_row)
         self.content_stack.set_visible_child_name("server_management")
@@ -187,6 +217,8 @@ class MinecraftServerManager(Gtk.Window):
             return
             
         page_name = row.page_name  # Usar atributo Python normal
+
+        # Check built-in pages first
         if page_name == _("Server Management"):
             self.content_stack.set_visible_child_name("server_management")
         elif page_name == _("Plugin Manager"):
@@ -201,6 +233,14 @@ class MinecraftServerManager(Gtk.Window):
             self.content_stack.set_visible_child_name("port_analyzer")
         elif page_name == _("Logs"):
             self.content_stack.set_visible_child_name("log_viewer")
+        else:
+            # Check application plugin pages
+            for app_plugin in self.app_plugin_manager.get_plugins():
+                if page_name == app_plugin.plugin_name:
+                    self.content_stack.set_visible_child_name(
+                        f"plugin_{app_plugin.plugin_id}"
+                    )
+                    return
 
     def _load_initial_data(self):
         """Carga los datos iniciales"""
@@ -248,14 +288,24 @@ class MinecraftServerManager(Gtk.Window):
         self.selected_server = server
         self._update_header_buttons()
 
-        # Notificar a las páginas
-        self.server_management_page.select_server(server)
-        self.plugin_management_page.select_server(server)
-        self.player_management_page.select_server(server)
-        self.resource_pack_page.select_server(server)
-        self.config_editor_page.select_server(server)
-        self.port_analysis_page.select_server(server)
-        self.log_viewer_page.select_server(server)
+        # Notificar a las páginas (cada una en try/except para no interrumpir las demás)
+        pages = [
+            ("server_management", self.server_management_page),
+            ("plugin_management", self.plugin_management_page),
+            ("player_management", self.player_management_page),
+            ("resource_pack", self.resource_pack_page),
+            ("config_editor", self.config_editor_page),
+            ("port_analysis", self.port_analysis_page),
+            ("log_viewer", self.log_viewer_page),
+        ]
+        for name, page in pages:
+            try:
+                page.select_server(server)
+            except Exception as e:
+                print(f"Warning: Error selecting server in {name}: {e}")
+
+        # Notificar a los plugins de la aplicación
+        self.app_plugin_manager.select_server_all(server)
 
     def _update_header_buttons(self):
         """Actualiza el estado de los botones del header"""
